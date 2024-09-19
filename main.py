@@ -1,10 +1,7 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.button import Button
-from kivy.uix.label import Label
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, ListProperty
 from kivy.vector import Vector
@@ -24,18 +21,19 @@ class Ball(Widget):
         super().__init__(**kwargs)
         self.size = (50, 50)  # Define the size of the ball
         with self.canvas:
-            self.color_instruction = Color(*self.color)  # Set initial color (red)
+            self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
 
     def move(self):
-        # Update the ball's position
+        # Update the ball's position based on velocity
         self.pos = Vector(self.vx, self.vy) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
 
-    def bounce_off_walls(self, width, height):
-        if (self.x <= 0 and self.vx < 0) or (self.right >= width and self.vx > 0):
+    def bounce_off_walls(self, layout_pos, layout_width, layout_height):
+        # Bounce off the walls of the layout, accounting for the ball's size
+        if self.x <= layout_pos[0] or self.right >= layout_pos[0] + layout_width:
             self.vx = -self.vx
-        if (self.y <= 0 and self.vy < 0) or (self.top >= height and self.vy > 0):
+        if self.y <= layout_pos[1] or self.top >= layout_pos[1] + layout_height:
             self.vy = -self.vy
 
     def collide_widget(self, other):
@@ -79,41 +77,51 @@ class Ball(Widget):
     def update_color_based_on_speed(self):
         speed = sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
         t = min(speed, 8) / 8  # t is between 0 and 1 based on the speed
-                
-        self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255, 
-                                      (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255, 
-                                      (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]  # Lerp between red and green
+
+        self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
+                                      (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
+                                      (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]  # Lerp between blue and red
 
 
-class GameScreen(Widget):
+class GameLayout(Widget):
     def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+        super(GameLayout, self).__init__(**kwargs)
+        with self.canvas.before:
+            # Set background color of the game area (black)
+            Color(0, 0, 0, 1)
+            self.rect = Rectangle(pos=self.pos, size=self.size)
+        self.bind(pos=self.update_rect, size=self.update_rect)
+
         self.balls = []
-        Clock.schedule_interval(self.update, 1 / 60.0)
+        Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
+
+    def update_rect(self, *args):
+        self.rect.pos = self.pos
+        self.rect.size = self.size
 
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
             self.spawn_ball_at_touch(touch)
 
     def spawn_ball_at_touch(self, touch):
-        ball = Ball()  # Ball size is now set in the constructor
+        ball = Ball()
         ball.center = touch.pos
 
-        # Generate random velocity with fixed magnitude 1
+        # Generate random velocity with fixed magnitude
         a = uniform(-5, 5)
         b = sqrt(25 - a ** 2) * (2 * randint(0, 1) - 1)
         ball.vx = a
         ball.vy = b
-        
-        ball.update_color_based_on_speed() # Ensure the color is updated based on initial speed
+
+        ball.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(ball)
         self.balls.append(ball)
 
     def update(self, dt):
+        # Update ball positions and handle collisions with walls and other balls
         for ball in self.balls:
             ball.move()
-            ball.bounce_off_walls(self.width, self.height)
-            # ball.update_color_based_on_speed()  # Update the ball's color based on speed
+            ball.bounce_off_walls(self.pos, self.width, self.height)  # Use GameLayout's local width/height
 
         for i, ball1 in enumerate(self.balls):
             for ball2 in self.balls[i + 1:]:
@@ -122,18 +130,6 @@ class GameScreen(Widget):
                     ball1.update_color_based_on_speed()
                     ball2.update_color_based_on_speed()
 
-class GameLayout(Widget):
-    def __init__(self, **kwargs):
-        super(GameLayout, self).__init__(**kwargs)
-        with self.canvas.before:
-            # Set background color of the game area (black)
-            self.bg_color = Color(0, 0, 0, 1)  # Black color
-            self.rect = Rectangle(pos=self.pos, size=self.size)
-        self.bind(pos=self.update_rect, size=self.update_rect)
-
-    def update_rect(self, *args):
-        self.rect.pos = self.pos
-        self.rect.size = self.size
 
 class MyApp(App):
     def build(self):
@@ -142,7 +138,7 @@ class MyApp(App):
 
         # Add a grey background to cover the entire UI
         with root.canvas.before:
-            self.bg_color = Color(0.2, 0.2, 0.2, 1)  # Dark grey background
+            Color(0.2, 0.2, 0.2, 1)  # Dark grey background
             self.ui_rect = Rectangle(pos=root.pos, size=root.size)
 
         # Bind the position and size of the grey background to the root layout
@@ -156,10 +152,8 @@ class MyApp(App):
 
         # Create a button below the game area for testing positioning
         button = Button(text='Clear', size_hint=(0.15, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.2})
+        button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
         root.add_widget(button)
-
-        # Dynamically update the size and position of the game area when the root size changes
-        root.bind(size=lambda *_: game_area.update_rect())
 
         return root
 
@@ -167,11 +161,12 @@ class MyApp(App):
         """ Update the grey background dynamically when the window size changes """
         instance.canvas.before.clear()
         with instance.canvas.before:
-            self.bg_color = Color(0.2, 0.2, 0.2, 1)  # Grey background for the entire screen
+            Color(0.2, 0.2, 0.2, 1)  # Grey background for the entire screen
             self.ui_rect = Rectangle(pos=instance.pos, size=instance.size)
 
         # Force canvas update
         instance.canvas.ask_update()
+
 
 if __name__ == "__main__":
     MyApp().run()
