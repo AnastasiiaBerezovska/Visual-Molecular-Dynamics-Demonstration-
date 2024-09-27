@@ -1,30 +1,39 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.slider import Slider
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, ListProperty
 from kivy.vector import Vector
 from kivy.graphics import Color, Ellipse, Rectangle
 from random import uniform, randint
-from math import sqrt
+import math
 
 
 class Ball(Widget):
     vx = NumericProperty(0)
     vy = NumericProperty(0)
+    gravity = NumericProperty(0)  # Gravity value affecting the ball
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
 
     def __init__(self, **kwargs):
+        self.center = kwargs.pop("ball_center")
+        self.radius = kwargs.pop("ball_radius")
         super().__init__(**kwargs)
-        self.size = (50, 50)  # Define the size of the ball
+        self.size = (self.radius * 2, self.radius * 2)  # Define the size of the ball
         with self.canvas:
             self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
 
     def move(self):
+        # Apply gravity to the vertical velocity
+        self.vy -= self.gravity
+
         # Update the ball's position based on velocity
         self.pos = Vector(self.vx, self.vy) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
@@ -35,7 +44,8 @@ class Ball(Widget):
             self.vx = -self.vx
         if self.y <= self.parentpos[1] or self.top >= self.parentpos[1] + self.parentsize[1]:
             self.vy = -self.vy
-            
+        self.keep_within_bounds()
+
     def rescale_position(self, new_pos, new_size):
         """
         Proportionally rescale the ball's position according to the new layout dimensions.
@@ -49,14 +59,14 @@ class Ball(Widget):
         self.pos = (new_size[0] * proportion_x + new_pos[0], new_size[1] * proportion_y + new_pos[1])
         self.vx *= (new_size[0] / self.parentsize[0])
         self.vy *= (new_size[1] / self.parentsize[1])
-
+        
         # Update the ball's position on the canvas
         self.ball_shape.pos = self.pos
         
         self.parentpos = new_pos
         self.parentsize = new_size
         self.keep_within_bounds()
-            
+
     def keep_within_bounds(self):
         """
         Ensure the ball stays within the bounds of the layout after a resize.
@@ -116,20 +126,19 @@ class Ball(Widget):
         other.vx, other.vy = v2n_new_vec + v2t_new_vec
 
     def update_color_based_on_speed(self):
-        speed = sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
+        speed = math.sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
         t = min(speed, 8) / 8  # t is between 0 and 1 based on the speed
 
         self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
                                       (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
-                                      (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]  # Lerp between blue and red
+                                      (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]
 
 
 class GameLayout(Widget):
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
         with self.canvas.before:
-            # Set background color of the game area (black)
-            Color(0, 0, 0, 1)
+            Color(0, 0, 0, 1)  # Set background color of the game area (black)
             self.rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
@@ -139,6 +148,7 @@ class GameLayout(Widget):
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
         self.size_in_between = self.size[:]
+        self.gravity = 0  # Initialize gravity
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
     def update_rect(self, instance, value):
@@ -179,17 +189,18 @@ class GameLayout(Widget):
         )
 
     def spawn_ball_at_touch(self, touch):
-        ball = Ball()
-        ball.center = touch.pos
+        ball = Ball(ball_center = touch.pos, ball_radius = self.ball_radius)
 
         # Generate random velocity with fixed magnitude
-        a = uniform(-5, 5)
-        b = sqrt(25 - a ** 2) * (2 * randint(0, 1) - 1)
+        angle = uniform(-math.pi, math.pi)
+        a = 5 * math.cos(angle)
+        b = 5 * math.sin(angle)
         ball.vx = a
         ball.vy = b
 
         ball.parentpos = self.pos[:]
         ball.parentsize = self.size[:]
+        ball.gravity = self.gravity  # Apply the current gravity setting to the ball
 
         ball.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(ball)
@@ -199,7 +210,7 @@ class GameLayout(Widget):
         # Update ball positions and handle collisions with walls and other balls
         for ball in self.balls:
             ball.move()
-            ball.bounce_off_walls()  # Pass the GameLayout's local pos, width/height
+            ball.bounce_off_walls()
 
         for i, ball1 in enumerate(self.balls):
             for ball2 in self.balls[i + 1:]:
@@ -212,6 +223,13 @@ class GameLayout(Widget):
         # When the game layout is resized, rescale balls' positions
         for ball in self.balls:
             ball.rescale_position(self.pos[:], self.size[:])
+
+    def set_gravity(self, value):
+        """Update gravity for all balls based on slider value."""
+        self.gravity = value
+        for ball in self.balls:
+            ball.gravity = self.gravity
+
 
 class MyApp(App):
     def build(self):
@@ -232,7 +250,17 @@ class MyApp(App):
         # Add the game area to the root layout
         root.add_widget(game_area)
 
-        # Create a button below the game area for testing positioning
+        # Create a UI panel with a slider for gravity
+        ui_panel = BoxLayout(orientation='vertical', size_hint=(0.8, 0.2), pos_hint={'center_x': 0.5, 'y': 0})
+        root.add_widget(ui_panel)
+
+        gravity_label = Label(text="Gravity", size_hint=(None, None), height=30)
+        gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(1, None), height=50)
+        gravity_slider.bind(value=lambda instance, value: game_area.set_gravity(value))
+
+        ui_panel.add_widget(gravity_label)
+        ui_panel.add_widget(gravity_slider)
+
         button = Button(text='Clear', size_hint=(0.15, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.2})
         button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
         root.add_widget(button)
@@ -245,7 +273,7 @@ class MyApp(App):
         with instance.canvas.before:
             Color(0.2, 0.2, 0.2, 1)  # Grey background for the entire screen
             self.ui_rect = Rectangle(pos=instance.pos, size=instance.size)
-
+        
         # Force canvas update
         instance.canvas.ask_update()
 
