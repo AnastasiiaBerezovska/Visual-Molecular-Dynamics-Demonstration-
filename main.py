@@ -29,12 +29,53 @@ class Ball(Widget):
         self.pos = Vector(self.vx, self.vy) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
 
-    def bounce_off_walls(self, layout_pos, layout_width, layout_height):
+    def bounce_off_walls(self):
         # Bounce off the walls of the layout, accounting for the ball's size
-        if self.x <= layout_pos[0] or self.right >= layout_pos[0] + layout_width:
+        if self.x <= self.parentpos[0] or self.right >= self.parentpos[0] + self.parentsize[0]:
             self.vx = -self.vx
-        if self.y <= layout_pos[1] or self.top >= layout_pos[1] + layout_height:
+        if self.y <= self.parentpos[1] or self.top >= self.parentpos[1] + self.parentsize[1]:
             self.vy = -self.vy
+            
+    def rescale_position(self, new_pos, new_size):
+        """
+        Proportionally rescale the ball's position according to the new layout dimensions.
+        """
+        # Calculate the proportional change in size
+        proportion_x = (self.pos[0] - self.parentpos[0]) / self.parentsize[0]
+        proportion_y = (self.pos[1] - self.parentpos[1]) / self.parentsize[1]
+        # print(f"Previous size: {self.parentpos}, New size: {new_size}")
+
+        # Adjust the position of the ball relative to the new layout size
+        self.pos = (new_size[0] * proportion_x + new_pos[0], new_size[1] * proportion_y + new_pos[1])
+        self.vx *= (new_size[0] / self.parentsize[0])
+        self.vy *= (new_size[1] / self.parentsize[1])
+
+        # Update the ball's position on the canvas
+        self.ball_shape.pos = self.pos
+        
+        self.parentpos = new_pos
+        self.parentsize = new_size
+        self.keep_within_bounds()
+            
+    def keep_within_bounds(self):
+        """
+        Ensure the ball stays within the bounds of the layout after a resize.
+        Adjust the position if it's out of bounds.
+        """
+        # Clamp the x position
+        if self.x < self.parentpos[0]:
+            self.x = self.parentpos[0]
+        if self.right > self.parentpos[0] + self.parentsize[0]:
+            self.right = self.parentpos[0] + self.parentsize[0]
+
+        # Clamp the y position
+        if self.y < self.parentpos[1]:
+            self.y = self.parentpos[1]
+        if self.top > self.parentpos[1] + self.parentsize[1]:
+            self.top = self.parentpos[1] + self.parentsize[1]
+
+        # Update the shape's position
+        self.ball_shape.pos = self.pos
 
     def collide_widget(self, other):
         distance = Vector(self.center).distance(other.center)
@@ -93,15 +134,49 @@ class GameLayout(Widget):
         self.bind(pos=self.update_rect, size=self.update_rect)
 
         self.balls = []
+        self.ball_radius = 25  # Radius of the ball, assuming size is 50x50
+        self.old_pos = self.pos[:]
+        self.old_size = self.size[:]
+        self.pos_in_between = self.pos[:]
+        self.size_in_between = self.size[:]
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
-    def update_rect(self, *args):
+    def update_rect(self, instance, value):
+        # Store the current position and size before updating
+        self.old_pos = self.pos_in_between[:]
+        self.old_size = self.size_in_between[:]
+
+        # Print current and new sizes and positions
+        # print(f"Previous pos: {self.old_pos}, Previous size: {self.old_size}")
+        # print(f"New pos: {self.pos}, New size: {self.size}")
+        # print(f"Updating because of: {instance} with value: {value}")
+
+        # Store old size and position for future reference
+        self.pos_in_between = self.pos[:]
+        self.size_in_between = self.size[:]
+
+        # Update the rectangle position and size
         self.rect.pos = self.pos
         self.rect.size = self.size
 
+        # Call the resize logic
+        self.on_resize()
+
     def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
+        if self.is_safe_touch(touch):
             self.spawn_ball_at_touch(touch)
+
+    def is_safe_touch(self, touch):
+        """
+        Check if the touch is within safe bounds to prevent the ball from extending past the edges.
+        """
+        safe_margin_x = self.ball_radius
+        safe_margin_y = self.ball_radius
+
+        return (
+            self.pos[0] + safe_margin_x <= touch.x <= self.right - safe_margin_x and
+            self.pos[1] + safe_margin_y <= touch.y <= self.top - safe_margin_y
+        )
 
     def spawn_ball_at_touch(self, touch):
         ball = Ball()
@@ -113,6 +188,9 @@ class GameLayout(Widget):
         ball.vx = a
         ball.vy = b
 
+        ball.parentpos = self.pos[:]
+        ball.parentsize = self.size[:]
+
         ball.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(ball)
         self.balls.append(ball)
@@ -121,7 +199,7 @@ class GameLayout(Widget):
         # Update ball positions and handle collisions with walls and other balls
         for ball in self.balls:
             ball.move()
-            ball.bounce_off_walls(self.pos, self.width, self.height)  # Use GameLayout's local width/height
+            ball.bounce_off_walls()  # Pass the GameLayout's local pos, width/height
 
         for i, ball1 in enumerate(self.balls):
             for ball2 in self.balls[i + 1:]:
@@ -130,6 +208,10 @@ class GameLayout(Widget):
                     ball1.update_color_based_on_speed()
                     ball2.update_color_based_on_speed()
 
+    def on_resize(self):
+        # When the game layout is resized, rescale balls' positions
+        for ball in self.balls:
+            ball.rescale_position(self.pos[:], self.size[:])
 
 class MyApp(App):
     def build(self):
