@@ -9,14 +9,14 @@ from kivy.uix.switch import Switch
 from kivy.clock import Clock
 from kivy.properties import NumericProperty, ListProperty, BooleanProperty
 from kivy.vector import Vector
-from kivy.graphics import Color, Ellipse, Rectangle
+from kivy.graphics import Color, Ellipse, Rectangle, Line
 from random import uniform, randint
 import math
 
 class Ball(Widget):
     vx = NumericProperty(0)
     vy = NumericProperty(0)
-    gravity = NumericProperty(0)  # Gravity value affecting the ball
+    # gravity = NumericProperty(0)  # Gravity value affecting the ball
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
@@ -29,11 +29,18 @@ class Ball(Widget):
         with self.canvas:
             self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
+            self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
+            self.arrow_line = Line(points=[], width=5)  # Arrow to represent force
+            self.total_force = Vector(0, 0)
 
     def move(self):
         # Apply gravity to the vertical velocity
-        self.vy -= self.gravity
-
+        # self.calculate_forces()
+        # self.vy -= self.gravity
+        self.vx += self.total_force[0]
+        self.vy += self.total_force[1]
+        self.update_force_arrow()
+        # print(self.vx, self.vy)
         # Update the ball's position based on velocity
         self.pos = Vector(self.vx, self.vy) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
@@ -150,8 +157,9 @@ class Ball(Widget):
         :param sigma: Distance at which the potential is zero.
         :return: A Vector representing the force applied on this ball due to the other ball.
         """
-        r = Vector(self.center).distance(other.center) / scale # Calculate distance between two balls
-        if r == 0:
+        r = (Vector(self.center).distance(other.center) - 30) / scale # Calculate distance between two balls
+        print(r)
+        if r < 10 ** 0:
             return Vector(0, 0)  # Avoid division by zero if the balls are at the same position
 
         # Lennard-Jones force formula
@@ -159,6 +167,32 @@ class Ball(Widget):
         force_direction = (Vector(self.center) - Vector(other.center)).normalize()  # Direction of the force
         return force_direction * force_magnitude
 
+    def reset_total_force(self):
+        self.total_force = Vector(0, 0)
+
+    def add_force(self, force_to_add):
+        self.total_force += force_to_add
+
+    def update_force_arrow(self):
+        """
+        Update the arrow direction, length, and color based on the total force.
+        :param total_force: The total Lennard-Jones force applied to this ball.
+        """
+        # Calculate the arrow's end position based on the force magnitude and direction
+        arrow_length = 30  # Limit arrow length to 300
+        arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
+        print("HELLO", arrow_length)
+        # Update the arrow points
+        self.arrow_line.points = [self.center_x, self.center_y, arrow_endpoint[0], arrow_endpoint[1]]
+        print("HI", self.arrow_line.points)
+
+        # Color the arrow based on the magnitude of the force (blue to red scale)
+        if self.total_force.length():
+            force_magnitude = math.log(self.total_force.length()) / math.log(10) + 20
+        else:
+            force_magnitude = 0
+        t = min(force_magnitude / 10, 1)  # Scale t between 0 and 1 for color interpolation
+        self.arrow_color.rgb = [t, 0, 1 - t]  # Transition from blue to red
 
 class GameLayout(Widget):
     intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
@@ -173,12 +207,12 @@ class GameLayout(Widget):
         self.bind(pos=self.update_rect, size=self.update_rect)
 
         self.balls = []
-        self.ball_radius = 25  # Radius of the ball, assuming size is 50x50
+        self.ball_radius = 15  # Radius of the ball, assuming size is 50x50
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
         self.size_in_between = self.size[:]
-        self.scale = 10 ** 0
+        self.scale = 10 ** (0)
         self.gravity = 0  # Initialize gravity
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
@@ -256,17 +290,11 @@ class GameLayout(Widget):
         temperature = 0
         pressure = 0
         for ball in self.balls:
-            ball.move()
-            ball.bounce_off_walls()
-
-            # Calculate kinetic energy
-            kinetic_energy = 0.5 * (ball.vx**2 + ball.vy**2)
-            total_energy += kinetic_energy
-            temperature += kinetic_energy  # Temperature proportional to kinetic energy
-
-        for i in range(len(self.balls) - 1):
+            ball.reset_total_force()
+            ball.add_force(Vector(0, -self.gravity))
+        for i in range(len(self.balls)):
+            ball1 = self.balls[i]
             for j in range(i + 1, len(self.balls)):
-                ball1 = self.balls[i]
                 ball2 = self.balls[j]
                 if ball1.collide_widget(ball2):
                     ball1.resolve_collision(ball2)
@@ -275,12 +303,19 @@ class GameLayout(Widget):
                 if self.intermolecular_forces:
                     force = ball1.lennard_jones_force(ball2, self.epsilon, self.sigma, self.scale)
                     print(force, i, j)
-                    ball1.vx += force.x
-                    ball1.vy += force.y
-                    ball2.vx -= force.x
-                    ball2.vy -= force.y
+                    ball1.add_force(force)
+                    ball2.add_force(-force)
+                    
+            ball1.update_force_arrow()
+            ball1.move()
+            ball1.bounce_off_walls()
 
-            pressure += abs(ball.vx) + abs(ball.vy)  # Simplified pressure calculation
+            # Calculate kinetic energy
+            kinetic_energy = 0.5 * (ball1.vx**2 + ball1.vy**2)
+            total_energy += kinetic_energy
+            temperature += kinetic_energy  # Temperature proportional to kinetic energy
+
+            pressure += abs(ball1.vx) + abs(ball1.vy)  # Simplified pressure calculation
 
         self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
         self.temperature_label.text = f"Temperature: {(temperature / len(self.balls)) if len(self.balls) else 0:.2f}"
