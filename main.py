@@ -5,13 +5,13 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.slider import Slider
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.switch import Switch
 from kivy.clock import Clock
-from kivy.properties import NumericProperty, ListProperty
+from kivy.properties import NumericProperty, ListProperty, BooleanProperty
 from kivy.vector import Vector
 from kivy.graphics import Color, Ellipse, Rectangle
 from random import uniform, randint
 import math
-
 
 class Ball(Widget):
     vx = NumericProperty(0)
@@ -88,10 +88,16 @@ class Ball(Widget):
         self.ball_shape.pos = self.pos
 
     def collide_widget(self, other):
+        """
+        Check if the ball collides with another widget (another ball).
+        """
         distance = Vector(self.center).distance(other.center)
         return distance <= (self.width / 2 + other.width / 2)
 
     def resolve_collision(self, other):
+        """
+        Resolve a collision between two balls using basic 2D collision mechanics.
+        """
         v1 = Vector(self.vx, self.vy)
         v2 = Vector(other.vx, other.vy)
 
@@ -126,15 +132,39 @@ class Ball(Widget):
         other.vx, other.vy = v2n_new_vec + v2t_new_vec
 
     def update_color_based_on_speed(self):
+        """
+        Update the ball's color based on its speed, interpolating between slow and fast colors.
+        """
         speed = math.sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
         t = min(speed, 8) / 8  # t is between 0 and 1 based on the speed
 
         self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
                                       (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
                                       (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]
+        
+    def lennard_jones_force(self, other, epsilon, sigma, scale):
+        """
+        Calculate the Lennard-Jones force between this ball and another ball.
+        :param other: The other ball object.
+        :param epsilon: Depth of the potential well.
+        :param sigma: Distance at which the potential is zero.
+        :return: A Vector representing the force applied on this ball due to the other ball.
+        """
+        r = Vector(self.center).distance(other.center) / scale # Calculate distance between two balls
+        if r == 0:
+            return Vector(0, 0)  # Avoid division by zero if the balls are at the same position
+
+        # Lennard-Jones force formula
+        force_magnitude = 24 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
+        force_direction = (Vector(self.center) - Vector(other.center)).normalize()  # Direction of the force
+        return force_direction * force_magnitude
 
 
 class GameLayout(Widget):
+    intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
+    epsilon = NumericProperty(1.0)  # Lennard-Jones potential depth
+    sigma = NumericProperty(1.0)  # Lennard-Jones potential sigma
+
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
         with self.canvas.before:
@@ -148,8 +178,17 @@ class GameLayout(Widget):
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
         self.size_in_between = self.size[:]
+        self.scale = 10 ** 0
         self.gravity = 0  # Initialize gravity
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
+
+        # Labels for stats
+        self.total_energy_label = Label(text="Total Energy: 0", size_hint=(None, None), pos_hint={})
+        self.temperature_label = Label(text="Temperature: 0", size_hint=(None, None), pos_hint={})
+        self.pressure_label = Label(text="Pressure: 0", size_hint=(None, None), pos_hint={})
+        # self.add_widget(self.total_energy_label)
+        # self.add_widget(self.temperature_label)
+        # self.add_widget(self.pressure_label)
 
     def update_rect(self, instance, value):
         # Store the current position and size before updating
@@ -189,7 +228,10 @@ class GameLayout(Widget):
         )
 
     def spawn_ball_at_touch(self, touch):
-        ball = Ball(ball_center = touch.pos, ball_radius = self.ball_radius)
+        """
+        Spawn a ball at the touch position with a random initial velocity.
+        """
+        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius)
 
         # Generate random velocity with fixed magnitude
         angle = uniform(-math.pi, math.pi)
@@ -207,17 +249,42 @@ class GameLayout(Widget):
         self.balls.append(ball)
 
     def update(self, dt):
-        # Update ball positions and handle collisions with walls and other balls
+        """
+        Update ball positions, handle collisions, and calculate energy, temperature, and pressure.
+        """
+        total_energy = 0
+        temperature = 0
+        pressure = 0
         for ball in self.balls:
             ball.move()
             ball.bounce_off_walls()
 
-        for i, ball1 in enumerate(self.balls):
-            for ball2 in self.balls[i + 1:]:
+            # Calculate kinetic energy
+            kinetic_energy = 0.5 * (ball.vx**2 + ball.vy**2)
+            total_energy += kinetic_energy
+            temperature += kinetic_energy  # Temperature proportional to kinetic energy
+
+        for i in range(len(self.balls) - 1):
+            for j in range(i + 1, len(self.balls)):
+                ball1 = self.balls[i]
+                ball2 = self.balls[j]
                 if ball1.collide_widget(ball2):
                     ball1.resolve_collision(ball2)
                     ball1.update_color_based_on_speed()
                     ball2.update_color_based_on_speed()
+                if self.intermolecular_forces:
+                    force = ball1.lennard_jones_force(ball2, self.epsilon, self.sigma, self.scale)
+                    print(force, i, j)
+                    ball1.vx += force.x
+                    ball1.vy += force.y
+                    ball2.vx -= force.x
+                    ball2.vy -= force.y
+
+            pressure += abs(ball.vx) + abs(ball.vy)  # Simplified pressure calculation
+
+        self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
+        self.temperature_label.text = f"Temperature: {(temperature / len(self.balls)) if len(self.balls) else 0:.2f}"
+        self.pressure_label.text = f"Pressure: {pressure:.2f}"
 
     def on_resize(self):
         # When the game layout is resized, rescale balls' positions
@@ -229,6 +296,18 @@ class GameLayout(Widget):
         self.gravity = value
         for ball in self.balls:
             ball.gravity = self.gravity
+
+    def set_epsilon(self, value):
+        """Update the epsilon parameter for Lennard-Jones potential."""
+        self.epsilon = value
+
+    def set_sigma(self, value):
+        """Update the sigma parameter for Lennard-Jones potential."""
+        self.sigma = value
+
+    def toggle_intermolecular_forces(self, switch, value):
+        """Toggle intermolecular forces on or off."""
+        self.intermolecular_forces = value
 
 
 class MyApp(App):
@@ -250,18 +329,36 @@ class MyApp(App):
         # Add the game area to the root layout
         root.add_widget(game_area)
 
-        # Create a UI panel with a slider for gravity
+        # Create a UI panel with sliders for gravity, epsilon, and sigma
         ui_panel = BoxLayout(orientation='vertical', size_hint=(0.8, 0.2), pos_hint={'center_x': 0.5, 'y': 0})
         root.add_widget(ui_panel)
 
         gravity_label = Label(text="Gravity", size_hint=(None, None), height=30)
-        gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(1, None), height=50)
+        gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(1, None), height=30)
         gravity_slider.bind(value=lambda instance, value: game_area.set_gravity(value))
+
+        epsilon_label = Label(text="Epsilon (Potential Depth)", size_hint=(None, None), height=30)
+        epsilon_slider = Slider(min=0, max=10, value=1, step=0.1, size_hint=(1, None), height=30)
+        epsilon_slider.bind(value=lambda instance, value: game_area.set_epsilon(value))
+
+        sigma_label = Label(text="Sigma (Potential Distance)", size_hint=(None, None), height=30)
+        sigma_slider = Slider(min=0.1, max=3, value=1, step=0.01, size_hint=(1, None), height=30)
+        sigma_slider.bind(value=lambda instance, value: game_area.set_sigma(value))
+
+        forces_switch_label = Label(text="Intermolecular Forces", size_hint=(None, None), height=30)
+        forces_switch = Switch(active=True, size_hint=(None, None), height=50)
+        forces_switch.bind(active=game_area.toggle_intermolecular_forces)
 
         ui_panel.add_widget(gravity_label)
         ui_panel.add_widget(gravity_slider)
+        ui_panel.add_widget(epsilon_label)
+        ui_panel.add_widget(epsilon_slider)
+        ui_panel.add_widget(sigma_label)
+        ui_panel.add_widget(sigma_slider)
+        ui_panel.add_widget(forces_switch_label)
+        ui_panel.add_widget(forces_switch)
 
-        button = Button(text='Clear', size_hint=(0.15, 0.1), pos_hint={'center_x': 0.5, 'center_y': 0.2})
+        button = Button(text='Clear', size_hint=(0.07, 0.05), pos_hint={'center_x': 0.5, 'center_y': 0.25})
         button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
         root.add_widget(button)
 
