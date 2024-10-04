@@ -39,11 +39,11 @@ class Ball(Widget):
         # self.vy -= self.gravity
         self.vx += self.total_force[0]
         self.vy += self.total_force[1]
-        self.update_force_arrow()
         # print(self.vx, self.vy)
         # Update the ball's position based on velocity
         self.pos = Vector(self.vx, self.vy) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
+        self.update_force_arrow()
 
     def bounce_off_walls(self):
         # Bounce off the walls of the layout, accounting for the ball's size
