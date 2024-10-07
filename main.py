@@ -20,6 +20,7 @@ class Ball(Widget):
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
+    cap = 8
 
     def __init__(self, **kwargs):
         self.center = kwargs.pop("ball_center")
@@ -32,6 +33,13 @@ class Ball(Widget):
             self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
             self.arrow_line = Line(points=[], width=4)  # Arrow to represent force
             self.total_force = Vector(0, 0)
+            
+    def fix_speed(self):
+        
+        speed = ((self.vx ** 2) + (self.vy ** 2)) ** 0.5
+        if speed > self.cap:
+            self.vx *= self.cap / speed
+            self.vy *= self.cap / speed
 
     def move(self):
         # Apply gravity to the vertical velocity
@@ -39,6 +47,8 @@ class Ball(Widget):
         # self.vy -= self.gravity
         self.vx += self.total_force[0]
         self.vy += self.total_force[1]
+        self.fix_speed()
+        self.update_color_based_on_speed()
         # print(self.vx, self.vy)
         # Update the ball's position based on velocity
         self.pos = Vector(self.vx, self.vy) + self.pos
@@ -66,6 +76,8 @@ class Ball(Widget):
         self.pos = (new_size[0] * proportion_x + new_pos[0], new_size[1] * proportion_y + new_pos[1])
         self.vx *= (new_size[0] / self.parentsize[0])
         self.vy *= (new_size[1] / self.parentsize[1])
+        self.fix_speed()
+        self.update_color_based_on_speed()
         
         # Update the ball's position on the canvas
         self.ball_shape.pos = self.pos
@@ -137,14 +149,16 @@ class Ball(Widget):
 
         self.vx, self.vy = v1n_new_vec + v1t_new_vec
         other.vx, other.vy = v2n_new_vec + v2t_new_vec
+        self.fix_speed()
+        other.fix_speed()
 
     def update_color_based_on_speed(self):
         """
         Update the ball's color based on its speed, interpolating between slow and fast colors.
         """
         speed = math.sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
+        # print(speed)
         t = min(speed, 8) / 8  # t is between 0 and 1 based on the speed
-
         self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
                                       (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
                                       (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]
@@ -192,7 +206,7 @@ class Ball(Widget):
             force_magnitude = math.log(self.total_force.length()) / math.log(10) + 5
         else:
             force_magnitude = 0
-        print(force_magnitude)
+        # print(force_magnitude)
         t = min(force_magnitude / 5, 1)  # Scale t between 0 and 1 for color interpolation
         self.arrow_color.rgb = [t, 0, 1 - t]  # Transition from blue to red
 
@@ -209,7 +223,7 @@ class GameLayout(Widget):
         self.bind(pos=self.update_rect, size=self.update_rect)
 
         self.balls = []
-        self.ball_radius = 15  # Radius of the ball, assuming size is 50x50
+        self.ball_radius = 10  # Radius of the ball, assuming size is 50x50
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
@@ -219,10 +233,10 @@ class GameLayout(Widget):
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
         # Labels for stats
-        self.total_energy_label = Label(text="Total Energy: 0", size_hint=(None, None), pos_hint={})
-        self.temperature_label = Label(text="Temperature: 0", size_hint=(None, None), pos_hint={})
-        self.pressure_label = Label(text="Pressure: 0", size_hint=(None, None), pos_hint={})
-        # self.add_widget(self.total_energy_label)
+        # self.total_energy_label = Label(text="Total Energy: 0", size_hint=(None, None), pos_hint={})
+        # self.temperature_label = Label(text="Temperature: 0", size_hint=(None, None), pos_hint={})
+        # self.pressure_label = Label(text="Pressure: 0", size_hint=(None, None), pos_hint={})
+        # # self.add_widget(self.total_energy_label)
         # self.add_widget(self.temperature_label)
         # self.add_widget(self.pressure_label)
 
@@ -400,14 +414,18 @@ class MyApp(App):
         root.add_widget(button)
         
         # Labels for stats, positioned using pos_hint
-        self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.23, 'center_y': 1})
-        self.temperature_label = Label(text="Temperature: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.56, 'center_y': 1})
-        self.pressure_label = Label(text="Pressure: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.89, 'center_y': 1})
+        self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.18, 'center_y': .95})
+        self.temperature_label = Label(text="Temperature: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.51, 'center_y': .95})
+        self.pressure_label = Label(text="Pressure: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.84, 'center_y': .95})
+        
+        game_area.total_energy_label = self.total_energy_label
+        game_area.temperature_label = self.temperature_label
+        game_area.pressure_label = self.pressure_label
         
         # Add labels to the layout
-        ui_panel.add_widget(self.total_energy_label)
-        ui_panel.add_widget(self.temperature_label)
-        ui_panel.add_widget(self.pressure_label)
+        root.add_widget(self.total_energy_label)
+        root.add_widget(self.temperature_label)
+        root.add_widget(self.pressure_label)
 
         return root
 
