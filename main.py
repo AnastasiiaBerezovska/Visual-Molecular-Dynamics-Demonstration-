@@ -30,7 +30,7 @@ class Ball(Widget):
             self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
             self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
-            self.arrow_line = Line(points=[], width=5)  # Arrow to represent force
+            self.arrow_line = Line(points=[], width=4)  # Arrow to represent force
             self.total_force = Vector(0, 0)
 
     def move(self):
@@ -157,13 +157,14 @@ class Ball(Widget):
         :param sigma: Distance at which the potential is zero.
         :return: A Vector representing the force applied on this ball due to the other ball.
         """
-        r = (Vector(self.center).distance(other.center) - 30) / scale # Calculate distance between two balls
-        print(r)
-        if r < 10 ** 0:
+        r = (Vector(self.center).distance(other.center)) / scale # Calculate distance between two balls
+        # print(r)
+        if r == 0:
             return Vector(0, 0)  # Avoid division by zero if the balls are at the same position
 
         # Lennard-Jones force formula
         force_magnitude = 24 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
+        force_magnitude = max(-1, (min(1, force_magnitude)))
         force_direction = (Vector(self.center) - Vector(other.center)).normalize()  # Direction of the force
         return force_direction * force_magnitude
 
@@ -181,17 +182,18 @@ class Ball(Widget):
         # Calculate the arrow's end position based on the force magnitude and direction
         arrow_length = 30  # Limit arrow length to 300
         arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
-        print("HELLO", arrow_length)
+        # print("HELLO", arrow_length)
         # Update the arrow points
         self.arrow_line.points = [self.center_x, self.center_y, arrow_endpoint[0], arrow_endpoint[1]]
-        print("HI", self.arrow_line.points)
+        # print("HI", self.arrow_line.points)
 
         # Color the arrow based on the magnitude of the force (blue to red scale)
         if self.total_force.length():
-            force_magnitude = math.log(self.total_force.length()) / math.log(10) + 20
+            force_magnitude = math.log(self.total_force.length()) / math.log(10) + 5
         else:
             force_magnitude = 0
-        t = min(force_magnitude / 10, 1)  # Scale t between 0 and 1 for color interpolation
+        print(force_magnitude)
+        t = min(force_magnitude / 5, 1)  # Scale t between 0 and 1 for color interpolation
         self.arrow_color.rgb = [t, 0, 1 - t]  # Transition from blue to red
 
 class GameLayout(Widget):
@@ -212,7 +214,7 @@ class GameLayout(Widget):
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
         self.size_in_between = self.size[:]
-        self.scale = 10 ** (0)
+        self.scale = 10 ** (2)
         self.gravity = 0  # Initialize gravity
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
@@ -302,7 +304,7 @@ class GameLayout(Widget):
                     ball2.update_color_based_on_speed()
                 if self.intermolecular_forces:
                     force = ball1.lennard_jones_force(ball2, self.epsilon, self.sigma, self.scale)
-                    print(force, i, j)
+                    # print(force, i, j)
                     ball1.add_force(force)
                     ball2.add_force(-force)
                     
@@ -396,6 +398,16 @@ class MyApp(App):
         button = Button(text='Clear', size_hint=(0.07, 0.05), pos_hint={'center_x': 0.5, 'center_y': 0.25})
         button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
         root.add_widget(button)
+        
+        # Labels for stats, positioned using pos_hint
+        self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.23, 'center_y': 1})
+        self.temperature_label = Label(text="Temperature: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.56, 'center_y': 1})
+        self.pressure_label = Label(text="Pressure: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.89, 'center_y': 1})
+        
+        # Add labels to the layout
+        ui_panel.add_widget(self.total_energy_label)
+        ui_panel.add_widget(self.temperature_label)
+        ui_panel.add_widget(self.pressure_label)
 
         return root
 
