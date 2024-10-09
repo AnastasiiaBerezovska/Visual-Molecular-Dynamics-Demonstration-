@@ -14,53 +14,51 @@ from random import uniform, randint
 import math
 
 class Ball(Widget):
-    vx = NumericProperty(0)
-    vy = NumericProperty(0)
     # gravity = NumericProperty(0)  # Gravity value affecting the ball
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
-    cap = 8
+    speed_cap = 8
 
     def __init__(self, **kwargs):
         self.center = kwargs.pop("ball_center")
         self.radius = kwargs.pop("ball_radius")
+        self.total_velocity = Vector(kwargs.pop("ball_vx"), kwargs.pop("ball_vy"))
         super().__init__(**kwargs)
         self.size = (self.radius * 2, self.radius * 2)  # Define the size of the ball
+        self.total_force = Vector(0, 0)
         with self.canvas:
             self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
             self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
             self.arrow_line = Line(points=[], width=4)  # Arrow to represent force
-            self.total_force = Vector(0, 0)
             
     def fix_speed(self):
         
-        speed = ((self.vx ** 2) + (self.vy ** 2)) ** 0.5
-        if speed > self.cap:
-            self.vx *= self.cap / speed
-            self.vy *= self.cap / speed
+        if self.total_velocity.length() > self.speed_cap:
+            self.total_velocity *= self.speed_cap / self.total_velocity.length()
 
     def move(self):
-        # Apply gravity to the vertical velocity
-        # self.calculate_forces()
-        # self.vy -= self.gravity
-        self.vx += self.total_force[0]
-        self.vy += self.total_force[1]
+        
+        self.total_velocity += self.total_force
         self.fix_speed()
-        self.update_color_based_on_speed()
-        # print(self.vx, self.vy)
-        # Update the ball's position based on velocity
-        self.pos = Vector(self.vx, self.vy) + self.pos
+        
+        
+        self.pos = self.total_velocity + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
+        self.bounce_off_walls()
+        
+        self.update_color_based_on_speed()
         self.update_force_arrow()
 
     def bounce_off_walls(self):
         # Bounce off the walls of the layout, accounting for the ball's size
         if self.x <= self.parentpos[0] or self.right >= self.parentpos[0] + self.parentsize[0]:
-            self.vx = -self.vx
+            self.total_velocity = Vector(-self.total_velocity.x, self.total_velocity.y)
+            
         if self.y <= self.parentpos[1] or self.top >= self.parentpos[1] + self.parentsize[1]:
-            self.vy = -self.vy
+            self.total_velocity = Vector(self.total_velocity.x, -self.total_velocity.y)
+            
         self.keep_within_bounds()
 
     def rescale_position(self, new_pos, new_size):
@@ -74,8 +72,10 @@ class Ball(Widget):
 
         # Adjust the position of the ball relative to the new layout size
         self.pos = (new_size[0] * proportion_x + new_pos[0], new_size[1] * proportion_y + new_pos[1])
-        self.vx *= (new_size[0] / self.parentsize[0])
-        self.vy *= (new_size[1] / self.parentsize[1])
+        
+        self.total_velocity = Vector(   self.total_velocity.x * new_size[0] / self.parentsize[0],
+                                        self.total_velocity.y * new_size[1] / self.parentsize[1])
+        
         self.fix_speed()
         self.update_color_based_on_speed()
         
@@ -117,8 +117,8 @@ class Ball(Widget):
         """
         Resolve a collision between two balls using basic 2D collision mechanics.
         """
-        v1 = Vector(self.vx, self.vy)
-        v2 = Vector(other.vx, other.vy)
+        v1 = self.total_velocity
+        v2 = other.total_velocity
 
         p1 = Vector(self.center)
         p2 = Vector(other.center)
@@ -147,8 +147,8 @@ class Ball(Widget):
         v2n_new_vec = v2n_new * normal
         v2t_new_vec = v2t_new * tangent
 
-        self.vx, self.vy = v1n_new_vec + v1t_new_vec
-        other.vx, other.vy = v2n_new_vec + v2t_new_vec
+        self.total_velocity = v1n_new_vec + v1t_new_vec
+        other.total_velocity = v2n_new_vec + v2t_new_vec
         self.fix_speed()
         other.fix_speed()
 
@@ -156,9 +156,8 @@ class Ball(Widget):
         """
         Update the ball's color based on its speed, interpolating between slow and fast colors.
         """
-        speed = math.sqrt(self.vx ** 2 + self.vy ** 2)  # Calculate the speed
         # print(speed)
-        t = min(speed, 8) / 8  # t is between 0 and 1 based on the speed
+        t = min(self.total_velocity.length(), self.speed_cap) / self.speed_cap  # t is between 0 and 1 based on the speed
         self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
                                       (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
                                       (self.color_slow[2] + (self.color_fast[2] - self.color_slow[2]) * t) / 255]
@@ -178,7 +177,6 @@ class Ball(Widget):
 
         # Lennard-Jones force formula
         force_magnitude = 24 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
-        force_magnitude = max(-1, (min(1, force_magnitude)))
         force_direction = (Vector(self.center) - Vector(other.center)).normalize()  # Direction of the force
         return force_direction * force_magnitude
 
@@ -281,14 +279,14 @@ class GameLayout(Widget):
         """
         Spawn a ball at the touch position with a random initial velocity.
         """
-        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius)
-
-        # Generate random velocity with fixed magnitude
+        # Generate random angle
         angle = uniform(-math.pi, math.pi)
-        a = 5 * math.cos(angle)
-        b = 5 * math.sin(angle)
-        ball.vx = a
-        ball.vy = b
+        
+        
+        vx = 5 * math.cos(angle)
+        vy = 5 * math.sin(angle)
+        
+        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius, ball_vx=vx, ball_vy=vy)
 
         ball.parentpos = self.pos[:]
         ball.parentsize = self.size[:]
@@ -324,14 +322,13 @@ class GameLayout(Widget):
                     
             ball1.update_force_arrow()
             ball1.move()
-            ball1.bounce_off_walls()
 
             # Calculate kinetic energy
-            kinetic_energy = 0.5 * (ball1.vx**2 + ball1.vy**2)
+            kinetic_energy = 0.5 * (ball1.total_velocity.length()**2)
             total_energy += kinetic_energy
             temperature += kinetic_energy  # Temperature proportional to kinetic energy
 
-            pressure += abs(ball1.vx) + abs(ball1.vy)  # Simplified pressure calculation
+            pressure += abs(ball1.total_velocity.x) + abs(ball1.total_velocity.y)  # Simplified pressure calculation
 
         self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
         self.temperature_label.text = f"Temperature: {(temperature / len(self.balls)) if len(self.balls) else 0:.2f}"
