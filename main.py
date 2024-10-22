@@ -2,6 +2,7 @@ from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.slider import Slider
 from kivy.uix.button import Button
 from kivy.uix.label import Label
@@ -18,15 +19,23 @@ class Ball(Widget):
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
-    speed_cap = 8
+    speed_cap = 500
+    force_cap = 30000
 
     def __init__(self, **kwargs):
+        
         self.center = kwargs.pop("ball_center")
         self.radius = kwargs.pop("ball_radius")
         self.total_velocity = Vector(kwargs.pop("ball_vx"), kwargs.pop("ball_vy"))
+        
+        self.parentpos = kwargs.pop("parent_pos")
+        self.parentsize = kwargs.pop("parent_size")
+        
         super().__init__(**kwargs)
+        
         self.size = (self.radius * 2, self.radius * 2)  # Define the size of the ball
         self.total_force = Vector(0, 0)
+        
         with self.canvas:
             self.color_instruction = Color(*self.color)  # Set initial color
             self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
@@ -37,16 +46,24 @@ class Ball(Widget):
         
         if self.total_velocity.length() > self.speed_cap:
             self.total_velocity *= self.speed_cap / self.total_velocity.length()
+            
+    def fix_force(self):
+        
+        if self.total_force.length() > self.force_cap:
+            self.total_force *= self.force_cap / self.total_force.length()
 
-    def move(self):
+    def move(self, delta):
         
-        self.total_velocity += self.total_force
-        self.fix_speed()
+        self.fix_force()
         
-        
-        self.pos = self.total_velocity + self.pos
+        self.pos = self.total_velocity * delta + 0.5 * self.total_force * (delta ** 2) + self.pos
         self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
         self.bounce_off_walls()
+        
+        self.total_velocity += self.total_force * delta
+        self.fix_speed()
+        
+        print(self.total_force.length())
         
         self.update_color_based_on_speed()
         self.update_force_arrow()
@@ -149,6 +166,7 @@ class Ball(Widget):
 
         self.total_velocity = v1n_new_vec + v1t_new_vec
         other.total_velocity = v2n_new_vec + v2t_new_vec
+        
         self.fix_speed()
         other.fix_speed()
 
@@ -156,7 +174,7 @@ class Ball(Widget):
         """
         Update the ball's color based on its speed, interpolating between slow and fast colors.
         """
-        # print(speed)
+        
         t = min(self.total_velocity.length(), self.speed_cap) / self.speed_cap  # t is between 0 and 1 based on the speed
         self.color_instruction.rgb = [(self.color_slow[0] + (self.color_fast[0] - self.color_slow[0]) * t) / 255,
                                       (self.color_slow[1] + (self.color_fast[1] - self.color_slow[1]) * t) / 255,
@@ -171,13 +189,14 @@ class Ball(Widget):
         :return: A Vector representing the force applied on this ball due to the other ball.
         """
         r = (Vector(self.center).distance(other.center)) / scale # Calculate distance between two balls
-        # print(r)
+        
         if r == 0:
             return Vector(0, 0)  # Avoid division by zero if the balls are at the same position
 
         # Lennard-Jones force formula
-        force_magnitude = 24 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
+        force_magnitude = 1000 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
         force_direction = (Vector(self.center) - Vector(other.center)).normalize()  # Direction of the force
+        
         return force_direction * force_magnitude
 
     def reset_total_force(self):
@@ -192,20 +211,20 @@ class Ball(Widget):
         :param total_force: The total Lennard-Jones force applied to this ball.
         """
         # Calculate the arrow's end position based on the force magnitude and direction
-        arrow_length = 30  # Limit arrow length to 300
-        arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
-        # print("HELLO", arrow_length)
-        # Update the arrow points
-        self.arrow_line.points = [self.center_x, self.center_y, arrow_endpoint[0], arrow_endpoint[1]]
-        # print("HI", self.arrow_line.points)
-
-        # Color the arrow based on the magnitude of the force (blue to red scale)
         if self.total_force.length():
             force_magnitude = math.log(self.total_force.length()) / math.log(10) + 5
         else:
             force_magnitude = 0
-        # print(force_magnitude)
-        t = min(force_magnitude / 5, 1)  # Scale t between 0 and 1 for color interpolation
+        
+        t = max(min(force_magnitude / 5, 1), 0)  # Scale t between 0 and 1 for color interpolation
+        
+        arrow_length = 30 * t # Limit arrow length to 30
+        arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
+
+        # Update the arrow points
+        self.arrow_line.points = [self.center_x, self.center_y, arrow_endpoint[0], arrow_endpoint[1]]
+
+        # Color the arrow based on the magnitude of the force (blue to red scale)
         self.arrow_color.rgb = [t, 0, 1 - t]  # Transition from blue to red
 
 class GameLayout(Widget):
@@ -228,6 +247,7 @@ class GameLayout(Widget):
         self.size_in_between = self.size[:]
         self.scale = 10 ** (2)
         self.gravity = 0  # Initialize gravity
+        self.delta = 1 / 60.0
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
         # Labels for stats
@@ -283,14 +303,11 @@ class GameLayout(Widget):
         angle = uniform(-math.pi, math.pi)
         
         
-        vx = 5 * math.cos(angle)
-        vy = 5 * math.sin(angle)
+        vx = 300 * math.cos(angle)
+        vy = 300 * math.sin(angle)
         
-        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius, ball_vx=vx, ball_vy=vy)
-
-        ball.parentpos = self.pos[:]
-        ball.parentsize = self.size[:]
-        ball.gravity = self.gravity  # Apply the current gravity setting to the ball
+        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius, ball_vx=vx, ball_vy=vy,
+                    parent_pos=self.pos[:], parent_size=self.size[:])
 
         ball.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(ball)
@@ -321,10 +338,10 @@ class GameLayout(Widget):
                     ball2.add_force(-force)
                     
             ball1.update_force_arrow()
-            ball1.move()
+            ball1.move(self.delta)
 
             # Calculate kinetic energy
-            kinetic_energy = 0.5 * (ball1.total_velocity.length()**2)
+            kinetic_energy = 0.5 * (ball1.total_velocity.length2())
             total_energy += kinetic_energy
             temperature += kinetic_energy  # Temperature proportional to kinetic energy
 
@@ -342,8 +359,8 @@ class GameLayout(Widget):
     def set_gravity(self, value):
         """Update gravity for all balls based on slider value."""
         self.gravity = value
-        for ball in self.balls:
-            ball.gravity = self.gravity
+        # for ball in self.balls:
+        #     ball.gravity = self.gravity
 
     def set_epsilon(self, value):
         """Update the epsilon parameter for Lennard-Jones potential."""
@@ -352,6 +369,10 @@ class GameLayout(Widget):
     def set_sigma(self, value):
         """Update the sigma parameter for Lennard-Jones potential."""
         self.sigma = value
+        
+    def set_delta(self, value):
+        """Update the sigma parameter for Lennard-Jones potential."""
+        self.delta = value
 
     def toggle_intermolecular_forces(self, switch, value):
         """Toggle intermolecular forces on or off."""
@@ -377,38 +398,78 @@ class MyApp(App):
         # Add the game area to the root layout
         root.add_widget(game_area)
 
-        # Create a UI panel with sliders for gravity, epsilon, and sigma
-        ui_panel = BoxLayout(orientation='vertical', size_hint=(0.8, 0.2), pos_hint={'center_x': 0.5, 'y': 0})
-        root.add_widget(ui_panel)
-
-        gravity_label = Label(text="Gravity", size_hint=(None, None), height=30)
-        gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(1, None), height=30)
+        # Create a GridLayout with 2 rows and 2 columns (for the sliders and labels)
+        ui_panel = GridLayout(
+            cols=2, 
+            rows=2, 
+            padding=0, 
+            spacing=[20, 0],  # Reduce vertical spacing to 10 between rows
+            size_hint=(0.9, 0.1), 
+            pos_hint={'center_x': 0.5, 'y': 0.2}
+        )
+        
+        # Gravity label and slider (inside BoxLayout)
+        gravity_box = BoxLayout(orientation='horizontal', spacing=0)
+        gravity_label = Label(text="Gravity", size_hint=(0.3, None), height=10)
+        gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(0.7, None), height=10)
         gravity_slider.bind(value=lambda instance, value: game_area.set_gravity(value))
+        gravity_box.add_widget(gravity_label)
+        gravity_box.add_widget(gravity_slider)
 
-        epsilon_label = Label(text="Epsilon (Potential Depth)", size_hint=(None, None), height=30)
-        epsilon_slider = Slider(min=0, max=10, value=1, step=0.1, size_hint=(1, None), height=30)
+        # Epsilon label and slider (inside BoxLayout)
+        epsilon_box = BoxLayout(orientation='horizontal', spacing=0)
+        epsilon_label = Label(text="Epsilon (Potential Depth)", size_hint=(0.3, None), height=10)
+        epsilon_slider = Slider(min=0, max=10, value=1, step=0.1, size_hint=(0.7, None), height=10)
         epsilon_slider.bind(value=lambda instance, value: game_area.set_epsilon(value))
+        epsilon_box.add_widget(epsilon_label)
+        epsilon_box.add_widget(epsilon_slider)
 
-        sigma_label = Label(text="Sigma (Potential Distance)", size_hint=(None, None), height=30)
-        sigma_slider = Slider(min=0.1, max=3, value=1, step=0.01, size_hint=(1, None), height=30)
+        # Sigma label and slider (inside BoxLayout)
+        sigma_box = BoxLayout(orientation='horizontal', spacing=0)
+        sigma_label = Label(text="Sigma (Potential Distance)", size_hint=(0.3, None), height=10)
+        sigma_slider = Slider(min=0.1, max=3, value=1, step=0.01, size_hint=(0.7, None), height=10)
         sigma_slider.bind(value=lambda instance, value: game_area.set_sigma(value))
+        sigma_box.add_widget(sigma_label)
+        sigma_box.add_widget(sigma_slider)
 
-        forces_switch_label = Label(text="Intermolecular Forces", size_hint=(None, None), height=30)
-        forces_switch = Switch(active=True, size_hint=(None, None), height=50)
+        # Delta label and slider (inside BoxLayout)
+        delta_box = BoxLayout(orientation='horizontal', spacing=0)
+        delta_label = Label(text="Delta (Timestep update for Verlet's)", size_hint=(0.3, None), height=10)
+        delta_slider = Slider(min=0, max=1, value=1 / 60.0, step=1 / 60.0, size_hint=(0.7, None), height=10)
+        delta_slider.bind(value=lambda instance, value: game_area.set_delta(value))
+        delta_box.add_widget(delta_label)
+        delta_box.add_widget(delta_slider)
+
+        # Add widgets to the grid layout
+        ui_panel.add_widget(gravity_box)
+        ui_panel.add_widget(epsilon_box)
+        ui_panel.add_widget(sigma_box)
+        ui_panel.add_widget(delta_box)
+
+        # Create a BoxLayout for the forces switch and button (horizontal layout)
+        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.1})
+
+        # Forces switch label and switch (on the left side)
+        forces_container = BoxLayout(orientation='horizontal', size_hint=(0.6, None), height=50)
+        forces_switch_label = Label(text="Intermolecular Forces", size_hint=(0.6, 1), height=30)
+        forces_switch = Switch(active=True, size_hint=(0.4, 1), height=30)
         forces_switch.bind(active=game_area.toggle_intermolecular_forces)
+        forces_container.add_widget(forces_switch_label)
+        forces_container.add_widget(forces_switch)
 
-        ui_panel.add_widget(gravity_label)
-        ui_panel.add_widget(gravity_slider)
-        ui_panel.add_widget(epsilon_label)
-        ui_panel.add_widget(epsilon_slider)
-        ui_panel.add_widget(sigma_label)
-        ui_panel.add_widget(sigma_slider)
-        ui_panel.add_widget(forces_switch_label)
-        ui_panel.add_widget(forces_switch)
-
-        button = Button(text='Clear', size_hint=(0.07, 0.05), pos_hint={'center_x': 0.5, 'center_y': 0.25})
+        # Clear button (on the right side)
+        button = Button(text='Clear', size_hint=(0.3, None), height=50)
         button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
-        root.add_widget(button)
+
+        # Add the forces_container and button to the bottom row layout
+        bottom_row.add_widget(forces_container)
+        bottom_row.add_widget(button)
+
+        # Add the bottom row to the root layout
+        root.add_widget(bottom_row)
+
+        # Add other panels and UI elements
+        root.add_widget(ui_panel)
         
         # Labels for stats, positioned using pos_hint
         self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.18, 'center_y': .95})
