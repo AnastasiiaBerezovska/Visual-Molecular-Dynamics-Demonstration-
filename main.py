@@ -14,8 +14,8 @@ from kivy.graphics import Color, Ellipse, Rectangle, Line
 from random import uniform, randint
 import math
 
-class Ball(Widget):
-    # gravity = NumericProperty(0)  # Gravity value affecting the ball
+class Molecule(Widget):
+    # gravity = NumericProperty(0)  # Gravity value affecting the molecule
     color_slow = [5, 0, 102, 255]
     color_fast = [255, 81, 220, 255]
     color = ListProperty([x / 255 for x in color_fast])  # Initial color is red (RGBA)
@@ -24,21 +24,21 @@ class Ball(Widget):
 
     def __init__(self, **kwargs):
         
-        self.center = kwargs.pop("ball_center")
-        self.radius = kwargs.pop("ball_radius")
-        self.total_velocity = Vector(kwargs.pop("ball_vx"), kwargs.pop("ball_vy"))
+        self.center = kwargs.pop("molecule_center")
+        self.radius = kwargs.pop("molecule_radius")
+        self.total_velocity = Vector(kwargs.pop("molecule_vx"), kwargs.pop("molecule_vy"))
         
         self.parentpos = kwargs.pop("parent_pos")
         self.parentsize = kwargs.pop("parent_size")
         
         super().__init__(**kwargs)
         
-        self.size = (self.radius * 2, self.radius * 2)  # Define the size of the ball
+        self.size = (self.radius * 2, self.radius * 2)  # Define the size of the molecule
         self.total_force = Vector(0, 0)
         
         with self.canvas:
             self.color_instruction = Color(*self.color)  # Set initial color
-            self.ball_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
+            self.molecule_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
             self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
             self.arrow_line = Line(points=[], width=4)  # Arrow to represent force
             
@@ -57,7 +57,7 @@ class Ball(Widget):
         self.fix_force()
         
         self.pos = self.total_velocity * delta + 0.5 * self.total_force * (delta ** 2) + self.pos
-        self.ball_shape.pos = self.pos  # Update the ball's position in the canvas
+        self.molecule_shape.pos = self.pos  # Update the molecule's position in the canvas
         self.bounce_off_walls()
         
         self.total_velocity += self.total_force * delta
@@ -69,7 +69,7 @@ class Ball(Widget):
         self.update_force_arrow()
 
     def bounce_off_walls(self):
-        # Bounce off the walls of the layout, accounting for the ball's size
+        # Bounce off the walls of the layout, accounting for the molecule's size
         if self.x <= self.parentpos[0] or self.right >= self.parentpos[0] + self.parentsize[0]:
             self.total_velocity = Vector(-self.total_velocity.x, self.total_velocity.y)
             
@@ -80,14 +80,14 @@ class Ball(Widget):
 
     def rescale_position(self, new_pos, new_size):
         """
-        Proportionally rescale the ball's position according to the new layout dimensions.
+        Proportionally rescale the molecule's position according to the new layout dimensions.
         """
         # Calculate the proportional change in size
         proportion_x = (self.pos[0] - self.parentpos[0]) / self.parentsize[0]
         proportion_y = (self.pos[1] - self.parentpos[1]) / self.parentsize[1]
         # print(f"Previous size: {self.parentpos}, New size: {new_size}")
 
-        # Adjust the position of the ball relative to the new layout size
+        # Adjust the position of the molecule relative to the new layout size
         self.pos = (new_size[0] * proportion_x + new_pos[0], new_size[1] * proportion_y + new_pos[1])
         
         self.total_velocity = Vector(   self.total_velocity.x * new_size[0] / self.parentsize[0],
@@ -96,8 +96,8 @@ class Ball(Widget):
         self.fix_speed()
         self.update_color_based_on_speed()
         
-        # Update the ball's position on the canvas
-        self.ball_shape.pos = self.pos
+        # Update the molecule's position on the canvas
+        self.molecule_shape.pos = self.pos
         
         self.parentpos = new_pos
         self.parentsize = new_size
@@ -105,7 +105,7 @@ class Ball(Widget):
 
     def keep_within_bounds(self):
         """
-        Ensure the ball stays within the bounds of the layout after a resize.
+        Ensure the molecule stays within the bounds of the layout after a resize.
         Adjust the position if it's out of bounds.
         """
         # Clamp the x position
@@ -121,18 +121,18 @@ class Ball(Widget):
             self.top = self.parentpos[1] + self.parentsize[1]
 
         # Update the shape's position
-        self.ball_shape.pos = self.pos
+        self.molecule_shape.pos = self.pos
 
     def collide_widget(self, other):
         """
-        Check if the ball collides with another widget (another ball).
+        Check if the molecule collides with another widget (another molecule).
         """
         distance = Vector(self.center).distance(other.center)
         return distance <= (self.width / 2 + other.width / 2)
 
     def resolve_collision(self, other):
         """
-        Resolve a collision between two balls using basic 2D collision mechanics.
+        Resolve a collision between two molecules using basic 2D collision mechanics.
         """
         v1 = self.total_velocity
         v2 = other.total_velocity
@@ -172,7 +172,7 @@ class Ball(Widget):
 
     def update_color_based_on_speed(self):
         """
-        Update the ball's color based on its speed, interpolating between slow and fast colors.
+        Update the molecule's color based on its speed, interpolating between slow and fast colors.
         """
         
         t = min(self.total_velocity.length(), self.speed_cap) / self.speed_cap  # t is between 0 and 1 based on the speed
@@ -182,16 +182,16 @@ class Ball(Widget):
         
     def lennard_jones_force(self, other, epsilon, sigma, scale):
         """
-        Calculate the Lennard-Jones force between this ball and another ball.
-        :param other: The other ball object.
+        Calculate the Lennard-Jones force between this molecule and another molecule.
+        :param other: The other molecule object.
         :param epsilon: Depth of the potential well.
         :param sigma: Distance at which the potential is zero.
-        :return: A Vector representing the force applied on this ball due to the other ball.
+        :return: A Vector representing the force applied on this molecule due to the other molecule.
         """
-        r = (Vector(self.center).distance(other.center)) / scale # Calculate distance between two balls
+        r = (Vector(self.center).distance(other.center)) / scale # Calculate distance between two molecules
         
         if r == 0:
-            return Vector(0, 0)  # Avoid division by zero if the balls are at the same position
+            return Vector(0, 0)  # Avoid division by zero if the molecules are at the same position
 
         # Lennard-Jones force formula
         force_magnitude = 1000 * epsilon * ((2 * (sigma / r) ** 12) - ((sigma / r) ** 6)) / r ** 2
@@ -208,7 +208,7 @@ class Ball(Widget):
     def update_force_arrow(self):
         """
         Update the arrow direction, length, and color based on the total force.
-        :param total_force: The total Lennard-Jones force applied to this ball.
+        :param total_force: The total Lennard-Jones force applied to this molecule.
         """
         # Calculate the arrow's end position based on the force magnitude and direction
         if self.total_force.length():
@@ -231,6 +231,8 @@ class GameLayout(Widget):
     intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
     epsilon = NumericProperty(1.0)  # Lennard-Jones potential depth
     sigma = NumericProperty(1.0)  # Lennard-Jones potential sigma
+    spring_constant = 100.0
+    spring_rest_length = 2.0
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -239,15 +241,17 @@ class GameLayout(Widget):
             self.rect = Rectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.update_rect, size=self.update_rect)
 
-        self.balls = []
-        self.ball_radius = 10  # Radius of the ball, assuming size is 50x50
+        self.molecules = []  # List of all molecules in the game
+        self.bonds = {}  # Dictionary to store Line objects for each bond
+        self.molecule_radius = 10  # Radius of the molecule
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
         self.size_in_between = self.size[:]
         self.scale = 10 ** (2)
         self.gravity = 0  # Initialize gravity
-        self.delta = 1 / 60.0
+        self.delta = 1 / 60.0  # Time step
+        self.selected_molecule = None  # Track the first selected molecule for bonding
         Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
 
         # Labels for stats
@@ -257,6 +261,60 @@ class GameLayout(Widget):
         # # self.add_widget(self.total_energy_label)
         # self.add_widget(self.temperature_label)
         # self.add_widget(self.pressure_label)
+
+    def create_bond(self, molecule1, molecule2):
+        """Creates a bond between two molecules and a Line object to represent it."""
+        if (molecule1, molecule2) not in self.bonds and (molecule2, molecule1) not in self.bonds:
+
+            # Create a Line object for the bond
+            with self.canvas:
+                line = Line(points=[molecule1.center_x, molecule1.center_y, molecule2.center_x, molecule2.center_y], width=1)
+                # Store the line associated with this bond in bond_lines
+                self.bonds[(molecule1, molecule2)] = line
+
+    def remove_bond(self, molecule1, molecule2):
+        """Removes a bond between two molecules and its associated Line object."""
+        if (molecule1, molecule2) in self.bonds:
+            bond = (molecule1, molecule2)
+        elif (molecule2, molecule1) in self.bonds:
+            bond = (molecule2, molecule1)
+        else:
+            return False
+        
+        self.canvas.remove(self.bonds[bond])
+        del self.bonds[bond]
+        return True
+            
+    def clear_bonds(self):
+        """Clears all bonds and removes bond lines from the canvas."""
+        for bond, line in self.bonds.items():
+            self.canvas.remove(line)
+        self.bonds.clear()
+
+    def update_bond_lines(self):
+        """Update the positions of all bond lines."""
+        # Ensure the color is white when updating bond lines
+        with self.canvas:
+            Color(1, 1, 1, 1)  # Set the color to white
+            for bond in self.bonds:
+                line = self.bonds[bond]
+                line.points = [bond[0].center_x, bond[0].center_y, bond[1].center_x, bond[1].center_y]
+                
+    def apply_spring_force(self):
+        """Apply spring force to all bonded pairs of molecules."""
+        for molecule1, molecule2 in self.bonds:
+            # Vector between molecule1 and molecule2
+            r12 = Vector(molecule2.center_x - molecule1.center_x, molecule2.center_y - molecule1.center_y)
+            distance = r12.length()
+
+            # Calculate the spring force using Hooke's law
+            force_magnitude = -self.spring_constant * (distance - self.spring_rest_length)
+
+            if distance > 0:
+                force_vector = (force_magnitude / distance) * r12  # Normalize the force vector
+                # Apply the force to both molecules
+                molecule1.add_force(-force_vector)
+                molecule2.add_force(force_vector)
 
     def update_rect(self, instance, value):
         # Store the current position and size before updating
@@ -280,24 +338,48 @@ class GameLayout(Widget):
         self.on_resize()
 
     def on_touch_down(self, touch):
-        if self.is_safe_touch(touch):
-            self.spawn_ball_at_touch(touch)
+        # if self.is_safe_touch(touch):
+        #     self.spawn_molecule_at_touch(touch)
+        # return
+        """Handle touch events for creating bonds between two selected molecules."""
+        
+        selected_molecule = None
+
+        # Check if the touch is near any molecule
+        for molecule in self.molecules:
+            if Vector(touch.pos).distance(molecule.center) <= self.molecule_radius:
+                selected_molecule = molecule
+                break
+
+        if selected_molecule:
+            if self.selected_molecule:
+                # First molecule selected
+                if not self.remove_bond(selected_molecule, self.selected_molecule):
+                    self.create_bond(selected_molecule, self.selected_molecule)
+                self.selected_molecule = None
+            else:
+                self.selected_molecule = selected_molecule
+        else:
+            # If no molecule is selected, spawn a new molecule at the touch position
+            if self.is_safe_touch(touch):
+                self.spawn_molecule_at_touch(touch)
+            self.selected_molecule = None
 
     def is_safe_touch(self, touch):
         """
-        Check if the touch is within safe bounds to prevent the ball from extending past the edges.
+        Check if the touch is within safe bounds to prevent the molecule from extending past the edges.
         """
-        safe_margin_x = self.ball_radius
-        safe_margin_y = self.ball_radius
+        safe_margin_x = self.molecule_radius
+        safe_margin_y = self.molecule_radius
 
         return (
             self.pos[0] + safe_margin_x <= touch.x <= self.right - safe_margin_x and
             self.pos[1] + safe_margin_y <= touch.y <= self.top - safe_margin_y
         )
 
-    def spawn_ball_at_touch(self, touch):
+    def spawn_molecule_at_touch(self, touch):
         """
-        Spawn a ball at the touch position with a random initial velocity.
+        Spawn a molecule at the touch position with a random initial velocity.
         """
         # Generate random angle
         angle = uniform(-math.pi, math.pi)
@@ -306,61 +388,66 @@ class GameLayout(Widget):
         vx = 300 * math.cos(angle)
         vy = 300 * math.sin(angle)
         
-        ball = Ball(ball_center=touch.pos, ball_radius=self.ball_radius, ball_vx=vx, ball_vy=vy,
+        molecule = Molecule(molecule_center=(touch.pos[0] + 40, touch.pos[1] + 40), molecule_radius=self.molecule_radius, molecule_vx=vx, molecule_vy=vy,
                     parent_pos=self.pos[:], parent_size=self.size[:])
 
-        ball.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
-        self.add_widget(ball)
-        self.balls.append(ball)
+        molecule.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
+        self.add_widget(molecule)
+        self.molecules.append(molecule)
 
     def update(self, dt):
         """
-        Update ball positions, handle collisions, and calculate energy, temperature, and pressure.
+        Update molecule positions, handle collisions, and update bonds.
         """
         total_energy = 0
         temperature = 0
         pressure = 0
-        for ball in self.balls:
-            ball.reset_total_force()
-            ball.add_force(Vector(0, -self.gravity))
-        for i in range(len(self.balls)):
-            ball1 = self.balls[i]
-            for j in range(i + 1, len(self.balls)):
-                ball2 = self.balls[j]
-                if ball1.collide_widget(ball2):
-                    ball1.resolve_collision(ball2)
-                    ball1.update_color_based_on_speed()
-                    ball2.update_color_based_on_speed()
+        for molecule in self.molecules:
+            molecule.reset_total_force()
+            molecule.add_force(Vector(0, -self.gravity))
+            
+        self.apply_spring_force()
+
+        for i in range(len(self.molecules)):
+            molecule1 = self.molecules[i]
+            for j in range(i + 1, len(self.molecules)):
+                molecule2 = self.molecules[j]
+                if molecule1.collide_widget(molecule2):
+                    molecule1.resolve_collision(molecule2)
+                    molecule1.update_color_based_on_speed()
+                    molecule2.update_color_based_on_speed()
                 if self.intermolecular_forces:
-                    force = ball1.lennard_jones_force(ball2, self.epsilon, self.sigma, self.scale)
+                    force = molecule1.lennard_jones_force(molecule2, self.epsilon, self.sigma, self.scale)
                     # print(force, i, j)
-                    ball1.add_force(force)
-                    ball2.add_force(-force)
+                    molecule1.add_force(force)
+                    molecule2.add_force(-force)
                     
-            ball1.update_force_arrow()
-            ball1.move(self.delta)
+            molecule1.update_force_arrow()
+            molecule1.move(self.delta)
 
             # Calculate kinetic energy
-            kinetic_energy = 0.5 * (ball1.total_velocity.length2())
+            kinetic_energy = 0.5 * (molecule1.total_velocity.length2())
             total_energy += kinetic_energy
             temperature += kinetic_energy  # Temperature proportional to kinetic energy
 
-            pressure += abs(ball1.total_velocity.x) + abs(ball1.total_velocity.y)  # Simplified pressure calculation
+            pressure += abs(molecule1.total_velocity.x) + abs(molecule1.total_velocity.y)  # Simplified pressure calculation
 
-        self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
-        self.temperature_label.text = f"Temperature: {(temperature / len(self.balls)) if len(self.balls) else 0:.2f}"
-        self.pressure_label.text = f"Pressure: {pressure:.2f}"
+        # self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
+        # self.temperature_label.text = f"Temperature: {(temperature / len(self.molecules)) if len(self.molecules) else 0:.2f}"
+        # self.pressure_label.text = f"Pressure: {pressure:.2f}"
+        # Update bond lines after molecule movement
+        self.update_bond_lines()
 
     def on_resize(self):
-        # When the game layout is resized, rescale balls' positions
-        for ball in self.balls:
-            ball.rescale_position(self.pos[:], self.size[:])
+        # When the game layout is resized, rescale molecules' positions
+        for molecule in self.molecules:
+            molecule.rescale_position(self.pos[:], self.size[:])
 
     def set_gravity(self, value):
-        """Update gravity for all balls based on slider value."""
+        """Update gravity for all molecules based on slider value."""
         self.gravity = value
-        # for ball in self.balls:
-        #     ball.gravity = self.gravity
+        # for molecule in self.molecules:
+        #     molecule.gravity = self.gravity
 
     def set_epsilon(self, value):
         """Update the epsilon parameter for Lennard-Jones potential."""
@@ -459,7 +546,7 @@ class MyApp(App):
 
         # Clear button (on the right side)
         button = Button(text='Clear', size_hint=(0.3, None), height=50)
-        button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.balls.clear()))
+        button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
 
         # Add the forces_container and button to the bottom row layout
         bottom_row.add_widget(forces_container)
