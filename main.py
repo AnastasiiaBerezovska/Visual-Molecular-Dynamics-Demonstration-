@@ -432,9 +432,9 @@ class GameLayout(Widget):
 
             pressure += abs(molecule1.total_velocity.x) + abs(molecule1.total_velocity.y)  # Simplified pressure calculation
 
-        # self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
-        # self.temperature_label.text = f"Temperature: {(temperature / len(self.molecules)) if len(self.molecules) else 0:.2f}"
-        # self.pressure_label.text = f"Pressure: {pressure:.2f}"
+        self.total_energy_label.text = f"Total Energy: {total_energy:.2f}"
+        self.temperature_label.text = f"Temperature: {(temperature / len(self.molecules)) if len(self.molecules) else 0:.2f}"
+        self.pressure_label.text = f"Pressure: {pressure:.2f}"
         # Update bond lines after molecule movement
         self.update_bond_lines()
 
