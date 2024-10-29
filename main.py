@@ -64,7 +64,7 @@ class MyApp(App):
         # Speed control slider
         speed_box = BoxLayout(orientation='horizontal', spacing=10)
         speed_label = Label(text="Speed", size_hint=(0.3, None), height=50)
-        speed_slider = Slider(min=0.125, max=1, value=1, step=0.1, size_hint=(0.7, None), height=50)
+        speed_slider = Slider(min=0.1, max=1, value=1, step=0.1, size_hint=(0.7, None), height=50)
         speed_slider.bind(value=lambda instance, value: game_area.set_speed(value))
         speed_box.add_widget(speed_label)
         speed_box.add_widget(speed_slider)
