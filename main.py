@@ -38,7 +38,64 @@ class MyApp(App):
             pos_hint={'center_x': 0.5, 'y': 0.2}
         )
         
-        # Gravity label and slider (inside BoxLayout)
+        # Gravity, epsilon, sigma, and delta sliders
+        gravity_box, epsilon_box, sigma_box, delta_box = self.create_slider_boxes(game_area)
+        
+        # Add sliders to the grid layout
+        ui_panel.add_widget(gravity_box)
+        ui_panel.add_widget(epsilon_box)
+        ui_panel.add_widget(sigma_box)
+        ui_panel.add_widget(delta_box)
+
+        # Create a BoxLayout for the forces switch, control buttons, and clear button
+        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.1})
+
+        # Forces switch label and switch
+        forces_container, forces_switch = self.create_forces_switch(game_area)
+
+        # Clear button
+        clear_button = Button(text='Clear', size_hint=(0.3, None), height=50)
+        clear_button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
+
+        # Start/Stop button
+        start_stop_button = Button(text='Start', size_hint=(0.3, None), height=50)
+        start_stop_button.bind(on_press=lambda x: self.toggle_simulation(start_stop_button, game_area))
+
+        # Speed control slider
+        speed_box = BoxLayout(orientation='horizontal', spacing=10)
+        speed_label = Label(text="Speed", size_hint=(0.3, None), height=50)
+        speed_slider = Slider(min=0.125, max=1, value=1, step=0.1, size_hint=(0.7, None), height=50)
+        speed_slider.bind(value=lambda instance, value: game_area.set_speed(value))
+        speed_box.add_widget(speed_label)
+        speed_box.add_widget(speed_slider)
+
+        # Add the widgets to the bottom row layout
+        bottom_row.add_widget(forces_container)
+        bottom_row.add_widget(start_stop_button)
+        bottom_row.add_widget(speed_box)
+        bottom_row.add_widget(clear_button)
+
+        # Add the bottom row to the root layout
+        root.add_widget(bottom_row)
+
+        # Add other panels and UI elements
+        root.add_widget(ui_panel)
+        
+        # Labels for stats, positioned using pos_hint
+        self.add_stat_labels(game_area, root)
+
+        return root
+
+    def toggle_simulation(self, button, game_area):
+        if button.text == 'Start':
+            game_area.start_simulation()
+            button.text = 'Stop'
+        else:
+            game_area.stop_simulation()
+            button.text = 'Start'
+
+    def create_slider_boxes(self, game_area):
+        # Gravity label and slider
         gravity_box = BoxLayout(orientation='horizontal', spacing=0)
         gravity_label = Label(text="Gravity", size_hint=(0.3, None), height=10)
         gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(0.7, None), height=10)
@@ -69,39 +126,20 @@ class MyApp(App):
         delta_slider.bind(value=lambda instance, value: game_area.set_delta(value))
         delta_box.add_widget(delta_label)
         delta_box.add_widget(delta_slider)
+        
+        return gravity_box, epsilon_box, sigma_box, delta_box
 
-        # Add widgets to the grid layout
-        ui_panel.add_widget(gravity_box)
-        ui_panel.add_widget(epsilon_box)
-        ui_panel.add_widget(sigma_box)
-        ui_panel.add_widget(delta_box)
-
-        # Create a BoxLayout for the forces switch and button (horizontal layout)
-        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.1})
-
-        # Forces switch label and switch (on the left side)
+    def create_forces_switch(self, game_area):
         forces_container = BoxLayout(orientation='horizontal', size_hint=(0.6, None), height=50)
         forces_switch_label = Label(text="Intermolecular Forces", size_hint=(0.6, 1), height=30)
         forces_switch = Switch(active=True, size_hint=(0.4, 1), height=30)
         forces_switch.bind(active=game_area.toggle_intermolecular_forces)
         forces_container.add_widget(forces_switch_label)
         forces_container.add_widget(forces_switch)
-
-        # Clear button (on the right side)
-        button = Button(text='Clear', size_hint=(0.3, None), height=50)
-        button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
-
-        # Add the forces_container and button to the bottom row layout
-        bottom_row.add_widget(forces_container)
-        bottom_row.add_widget(button)
-
-        # Add the bottom row to the root layout
-        root.add_widget(bottom_row)
-
-        # Add other panels and UI elements
-        root.add_widget(ui_panel)
         
-        # Labels for stats, positioned using pos_hint
+        return forces_container, forces_switch
+
+    def add_stat_labels(self, game_area, root):
         self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.18, 'center_y': .95})
         self.temperature_label = Label(text="Temperature: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.51, 'center_y': .95})
         self.pressure_label = Label(text="Pressure: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.84, 'center_y': .95})
@@ -110,12 +148,9 @@ class MyApp(App):
         game_area.temperature_label = self.temperature_label
         game_area.pressure_label = self.pressure_label
         
-        # Add labels to the layout
         root.add_widget(self.total_energy_label)
         root.add_widget(self.temperature_label)
         root.add_widget(self.pressure_label)
-
-        return root
 
     def update_ui_background(self, instance, *args):
         """ Update the grey background dynamically when the window size changes """

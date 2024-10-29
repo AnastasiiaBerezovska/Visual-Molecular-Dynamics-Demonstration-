@@ -32,8 +32,10 @@ class GameLayout(Widget):
         self.gravity = 0  # Initialize gravity
         self.delta = 1 / 60.0  # Time step
         self.selected_molecule = None  # Track the first selected molecule for bonding
-        Clock.schedule_interval(self.update, 1 / 60.0)  # Update 60 times per second
+        self.simulation_running = False  # Track if simulation is running
 
+        # Variable to store the scheduled update event
+        self.update_event = None
         # Labels for stats
         # self.total_energy_label = Label(text="Total Energy: 0", size_hint=(None, None), pos_hint={})
         # self.temperature_label = Label(text="Temperature: 0", size_hint=(None, None), pos_hint={})
@@ -174,6 +176,29 @@ class GameLayout(Widget):
         molecule.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(molecule)
         self.molecules.append(molecule)
+        
+    def start_simulation(self):
+        """Start the simulation update loop."""
+        if not self.simulation_running:
+            self.simulation_running = True
+            self.update_event = Clock.schedule_interval(self.update, 1 / 60.0)  # Default speed at 60 FPS
+
+    def stop_simulation(self):
+        """Stop the simulation update loop."""
+        if self.simulation_running:
+            self.simulation_running = False
+            if self.update_event is not None:
+                self.update_event.cancel()
+                self.update_event = None
+
+    def set_speed(self, speed_factor):
+        """Adjust the simulation speed by setting a new interval."""
+        if self.update_event is not None:
+            self.update_event.cancel()
+        
+        # Schedule with the new interval based on the speed factor
+        new_interval = (1 / 60.0) / speed_factor  # Adjust interval according to speed factor
+        self.update_event = Clock.schedule_interval(self.update, new_interval)
 
     def update(self, dt):
         """
@@ -238,7 +263,7 @@ class GameLayout(Widget):
         self.sigma = value
         
     def set_delta(self, value):
-        """Update the sigma parameter for Lennard-Jones potential."""
+        """Update the timestep for Verlet integration."""
         self.delta = value
 
     def toggle_intermolecular_forces(self, switch, value):
