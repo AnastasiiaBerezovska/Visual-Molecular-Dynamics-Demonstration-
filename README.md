@@ -46,9 +46,21 @@ As an educational and exploratory tool, the VMD Demo provides visitors with a fi
 ## Running this project
 
 #### Should be incredibly simple - Just make sure you have kivy installed
-        - pip install kivy (if necessary)
+        pip install kivy (if necessary)
 #### Might be helpful to create a virtual environment for this 
-        - python3 -m venv {VENV_NAME}
-        - {VENV_NAME}/Scripts/activate (Windows) / source {VENV_NAME}/bin/activate (Mac / Linux)
+        python3 -m venv {VENV_NAME}
+        {VENV_NAME}/Scripts/activate (Windows) / source {VENV_NAME}/bin/activate (Mac / Linux)
 
 ### Then just run python3 main.py
+
+
+### Specifically on the Vislab LASSO system
+
+#### Open up a terminal - should be in C:\Users\visloc, if not navigate to that location
+        cd C:\Users\visloc
+#### Move to the molecular-dynamics-kivy folder
+        cd molecular-dynamics-kivy
+#### Activate the virtual environment (kivyenv)
+        kivyenv\Scripts\activate
+#### Run the project
+        python main.py
