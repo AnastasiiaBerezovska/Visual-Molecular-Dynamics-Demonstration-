@@ -26,6 +26,7 @@ class GameLayout(Widget):
         self.molecules = []  # List of all molecules in the game
         self.bonds = {}  # Dictionary to store Line objects for each bond
         self.molecule_radius = self.size[0] * self.ball_radius_ratio # Radius of the molecule
+        print(self.molecule_radius)
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
