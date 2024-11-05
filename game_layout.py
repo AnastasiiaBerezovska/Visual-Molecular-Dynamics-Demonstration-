@@ -14,7 +14,7 @@ class GameLayout(Widget):
     sigma = NumericProperty(1.0)  # Lennard-Jones potential sigma
     spring_constant = 100.0
     spring_rest_length = 2.0
-    ball_radius_ratio = 0.02
+    ball_radius_ratio = 0.015
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -303,6 +303,7 @@ class GameLayout(Widget):
             molecule.reset_total_force()
             molecule.add_force(Vector(0, -self.gravity))
             
+        print(self.molecule_radius)
         self.apply_spring_force()
 
         for i in range(len(self.molecules)):
