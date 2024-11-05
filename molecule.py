@@ -208,7 +208,7 @@ class Molecule(Widget):
         
         t = max(min(force_magnitude / 5, 1), 0)  # Scale t between 0 and 1 for color interpolation
         
-        arrow_length = 30 * t # Limit arrow length to 30
+        arrow_length = self.radius * 2 * t # Limit arrow length to 30
         arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
 
         # Update the arrow points

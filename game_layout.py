@@ -14,7 +14,7 @@ class GameLayout(Widget):
     sigma = NumericProperty(1.0)  # Lennard-Jones potential sigma
     spring_constant = 100.0
     spring_rest_length = 2.0
-    ball_radius_ratio = 0.1
+    ball_radius_ratio = 0.02
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -26,7 +26,7 @@ class GameLayout(Widget):
         self.molecules = []  # List of all molecules in the game
         self.bonds = {}  # Dictionary to store Line objects for each bond
         self.molecule_radius = self.size[0] * self.ball_radius_ratio # Radius of the molecule
-        print(self.molecule_radius)
+        # print(self.molecule_radius)
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
         self.pos_in_between = self.pos[:]
@@ -206,7 +206,8 @@ class GameLayout(Widget):
         # Update the rectangle position and size
         self.rect.pos = self.pos
         self.rect.size = self.size
-
+        
+        self.molecule_radius = self.size[0] * self.ball_radius_ratio
         # Call the resize logic
         self.on_resize()
 
