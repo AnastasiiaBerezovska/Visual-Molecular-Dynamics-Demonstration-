@@ -53,7 +53,7 @@ class Molecule(Widget):
         self.total_velocity += self.total_force * delta
         self.fix_speed()
         
-        print(self.total_force.length())
+        # print(self.total_force.length())
         
         self.update_color_based_on_speed()
         self.update_force_arrow()
