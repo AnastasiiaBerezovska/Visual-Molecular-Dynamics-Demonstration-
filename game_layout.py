@@ -4,6 +4,7 @@ from kivy.graphics import Color, Rectangle, Line
 from kivy.properties import NumericProperty, BooleanProperty
 from kivy.vector import Vector
 from molecule import Molecule  # Import the Molecule class
+from kivy.core.window import Window
 from random import uniform, randint
 import math
 
@@ -36,7 +37,7 @@ class GameLayout(Widget):
         self.simulation_running = False  # Track if simulation is running
 
         # Variable to store the scheduled update event
-        self.update_event = None
+        # self.update_event = None
         # Labels for stats
         # self.total_energy_label = Label(text="Total Energy: 0", size_hint=(None, None), pos_hint={})
         # self.temperature_label = Label(text="Temperature: 0", size_hint=(None, None), pos_hint={})
@@ -44,6 +45,94 @@ class GameLayout(Widget):
         # # self.add_widget(self.total_energy_label)
         # self.add_widget(self.temperature_label)
         # self.add_widget(self.pressure_label)
+        
+        # Key bindings for controlling sliders
+        self.key_mapping = {
+            'gravity_increase': 'w',
+            'gravity_decrease': 's',
+            'epsilon_increase': 'e',
+            'epsilon_decrease': 'd',
+            'sigma_increase': 'r',
+            'sigma_decrease': 'f',
+            'delta_increase': 't',
+            'delta_decrease': 'g',
+            'speed_increase': 'y',
+            'speed_decrease': 'h'
+        }
+
+        # Schedule the update event
+        self.update_event = Clock.schedule_interval(self.update, 1 / 60.0)
+        self.setup_keyboard()
+        
+    def setup_keyboard(self):
+        """Initialize keyboard binding for slider controls."""
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self.on_key_down)
+
+    def _keyboard_closed(self):
+        """Unbind keyboard events when keyboard is closed."""
+        self._keyboard.unbind(on_key_down=self.on_key_down)
+        self._keyboard = None
+
+    def on_key_down(self, keyboard, keycode, text, modifiers):
+        """Handle key press events for controlling sliders."""
+        key = keycode[1]
+        if key == self.key_mapping['gravity_increase']:
+            self.adjust_gravity(0.1)
+        elif key == self.key_mapping['gravity_decrease']:
+            self.adjust_gravity(-0.1)
+        elif key == self.key_mapping['epsilon_increase']:
+            self.adjust_epsilon(0.1)
+        elif key == self.key_mapping['epsilon_decrease']:
+            self.adjust_epsilon(-0.1)
+        elif key == self.key_mapping['sigma_increase']:
+            self.adjust_sigma(0.05)
+        elif key == self.key_mapping['sigma_decrease']:
+            self.adjust_sigma(-0.05)
+        elif key == self.key_mapping['delta_increase']:
+            self.adjust_delta(1 / 60.0)
+        elif key == self.key_mapping['delta_decrease']:
+            self.adjust_delta(-1 / 60.0)
+        elif key == self.key_mapping['speed_increase']:
+            self.adjust_speed(0.1)
+        elif key == self.key_mapping['speed_decrease']:
+            self.adjust_speed(-0.1)
+        return True
+
+    def adjust_gravity(self, change):
+        """Adjust gravity by a specified increment and update the slider."""
+        self.gravity = max(0, min(self.gravity + change, 10))
+        if self.gravity_slider:
+            self.gravity_slider.value = self.gravity
+
+    def adjust_epsilon(self, change):
+        """Adjust epsilon by a specified increment and update the slider."""
+        self.epsilon = max(0, min(self.epsilon + change, 10))
+        if self.epsilon_slider:
+            self.epsilon_slider.value = self.epsilon
+
+    def adjust_sigma(self, change):
+        """Adjust sigma by a specified increment and update the slider."""
+        self.sigma = max(0.1, min(self.sigma + change, 3))
+        if self.sigma_slider:
+            self.sigma_slider.value = self.sigma
+
+    def adjust_delta(self, change):
+        """Adjust delta by a specified increment and update the slider."""
+        self.delta = max(1 / 600, min(self.delta + change, 1))
+        if self.delta_slider:
+            self.delta_slider.value = self.delta
+
+    def adjust_speed(self, change):
+        """Adjust simulation speed factor by a specified increment and update the slider."""
+        new_speed = max(0.1, min(self.speed_slider.value + change, 3)) if self.speed_slider else 1.0
+        if self.update_event:
+            self.update_event.cancel()
+
+        # Update speed slider and reschedule with new interval
+        if self.speed_slider:
+            self.speed_slider.value = new_speed
+        self.update_event = Clock.schedule_interval(self.update, 1 / 60.0 / new_speed)
 
     def create_bond(self, molecule1, molecule2):
         """Creates a bond between two molecules and a Line object to represent it."""

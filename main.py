@@ -63,11 +63,13 @@ class MyApp(App):
 
         # Speed control slider
         speed_box = BoxLayout(orientation='horizontal', spacing=10)
-        speed_label = Label(text="Speed", size_hint=(0.3, None), height=50)
+        speed_label = Label(text="Speed of Simulation (Y increase, H decrease)", size_hint=(0.3, None), height=50)
         speed_slider = Slider(min=0.1, max=1, value=1, step=0.1, size_hint=(0.7, None), height=50)
         speed_slider.bind(value=lambda instance, value: game_area.set_speed(value))
         speed_box.add_widget(speed_label)
         speed_box.add_widget(speed_slider)
+        
+        game_area.speed_slider = speed_slider
 
         # Add the widgets to the bottom row layout
         bottom_row.add_widget(forces_container)
@@ -97,7 +99,7 @@ class MyApp(App):
     def create_slider_boxes(self, game_area):
         # Gravity label and slider
         gravity_box = BoxLayout(orientation='horizontal', spacing=0)
-        gravity_label = Label(text="Gravity", size_hint=(0.3, None), height=10)
+        gravity_label = Label(text="Gravity (W increase, S decrease)", size_hint=(0.3, None), height=10)
         gravity_slider = Slider(min=0, max=10, value=0, step=0.01, size_hint=(0.7, None), height=10)
         gravity_slider.bind(value=lambda instance, value: game_area.set_gravity(value))
         gravity_box.add_widget(gravity_label)
@@ -105,7 +107,7 @@ class MyApp(App):
 
         # Epsilon label and slider (inside BoxLayout)
         epsilon_box = BoxLayout(orientation='horizontal', spacing=0)
-        epsilon_label = Label(text="Epsilon (Potential Depth)", size_hint=(0.3, None), height=10)
+        epsilon_label = Label(text="Epsilon (Potential Depth used for Lennard-Jones force between Molecules) (E increase, D decrease)", size_hint=(0.3, None), height=10)
         epsilon_slider = Slider(min=0, max=10, value=1, step=0.1, size_hint=(0.7, None), height=10)
         epsilon_slider.bind(value=lambda instance, value: game_area.set_epsilon(value))
         epsilon_box.add_widget(epsilon_label)
@@ -113,7 +115,7 @@ class MyApp(App):
 
         # Sigma label and slider (inside BoxLayout)
         sigma_box = BoxLayout(orientation='horizontal', spacing=0)
-        sigma_label = Label(text="Sigma (Potential Distance)", size_hint=(0.3, None), height=10)
+        sigma_label = Label(text="Sigma (Potential Distance used for Lennard-Jones force between Molecules) (R increase, F decrease)", size_hint=(0.3, None), height=10)
         sigma_slider = Slider(min=0.1, max=3, value=1, step=0.01, size_hint=(0.7, None), height=10)
         sigma_slider.bind(value=lambda instance, value: game_area.set_sigma(value))
         sigma_box.add_widget(sigma_label)
@@ -121,11 +123,16 @@ class MyApp(App):
 
         # Delta label and slider (inside BoxLayout)
         delta_box = BoxLayout(orientation='horizontal', spacing=0)
-        delta_label = Label(text="Delta (Timestep update for Verlet's)", size_hint=(0.3, None), height=10)
+        delta_label = Label(text="Delta (Timestep update for Verlet's Algorithm) (T increase, G decrease)", size_hint=(0.3, None), height=10)
         delta_slider = Slider(min=0, max=1, value=1 / 60.0, step=1 / 60.0, size_hint=(0.7, None), height=10)
         delta_slider.bind(value=lambda instance, value: game_area.set_delta(value))
         delta_box.add_widget(delta_label)
         delta_box.add_widget(delta_slider)
+        
+        game_area.gravity_slider = gravity_slider
+        game_area.epsilon_slider = epsilon_slider
+        game_area.sigma_slider = sigma_slider
+        game_area.delta_slider = delta_slider
         
         return gravity_box, epsilon_box, sigma_box, delta_box
 
