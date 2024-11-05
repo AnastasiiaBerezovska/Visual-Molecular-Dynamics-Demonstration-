@@ -130,7 +130,7 @@ class GameLayout(Widget):
 
         # Check if the touch is near any molecule
         for molecule in self.molecules:
-            if Vector(touch.pos).distance(molecule.center) <= self.molecule_radius:
+            if Vector(touch.pos).distance(molecule.center) <= molecule.radius * 2:
                 selected_molecule = molecule
                 break
 
