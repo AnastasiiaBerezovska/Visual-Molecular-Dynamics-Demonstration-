@@ -37,6 +37,7 @@ class GameLayout(Widget):
         self.simulation_running = False  # Track if simulation is running
         self.size_factor = 0.6
         self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor # Radius of the molecule
+        self.forces_visible = True
 
         # Variable to store the scheduled update event
         # self.update_event = None
@@ -280,7 +281,7 @@ class GameLayout(Widget):
         vy = 300 * math.sin(angle)
         
         molecule = Molecule(molecule_center=(touch.pos[0] + 40, touch.pos[1] + 40), molecule_radius=self.molecule_radius, molecule_vx=vx, molecule_vy=vy,
-                    parent_pos=self.pos[:], parent_size=self.size[:])
+                    parent_pos=self.pos[:], parent_size=self.size[:], forces_visible=self.forces_visible)
 
         molecule.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
         self.add_widget(molecule)
@@ -389,3 +390,11 @@ class GameLayout(Widget):
     def toggle_intermolecular_forces(self, switch, value):
         """Toggle intermolecular forces on or off."""
         self.intermolecular_forces = value
+
+    def toggle_forces_visible(self, switch, value):
+        """Toggle intermolecular forces on or off."""
+        self.forces_visible = value
+        # Set whether force arrows should be visible for this molecule
+        for molecule in self.molecules:
+            molecule.forces_visible = self.forces_visible
+            molecule.update_force_arrow()

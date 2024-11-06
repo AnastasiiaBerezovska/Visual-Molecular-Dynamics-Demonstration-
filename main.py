@@ -52,6 +52,9 @@ class MyApp(App):
 
         # Forces switch label and switch
         forces_container, forces_switch = self.create_forces_switch(game_area)
+        
+        # Forces switch label and switch
+        forces_visible_container, forces_visible_switch = self.create_forces_visible_switch(game_area)
 
         # Clear button
         clear_button = Button(text='Clear', size_hint=(0.3, None), height=50)
@@ -82,6 +85,7 @@ class MyApp(App):
 
         # Add the widgets to the bottom row layout
         bottom_row.add_widget(forces_container)
+        bottom_row.add_widget(forces_visible_container)
         bottom_row.add_widget(start_stop_button)
         bottom_row.add_widget(speed_box)
         bottom_row.add_widget(size_box)
@@ -155,6 +159,16 @@ class MyApp(App):
         forces_container.add_widget(forces_switch)
         
         return forces_container, forces_switch
+    
+    def create_forces_visible_switch(self, game_area):
+        forces_visible_container = BoxLayout(orientation='horizontal', size_hint=(0.6, None), height=50)
+        forces_visible_switch_label = Label(text="See Net Force", size_hint=(0.6, 1), height=30)
+        forces_visible_switch = Switch(active=True, size_hint=(0.4, 1), height=30)
+        forces_visible_switch.bind(active=game_area.toggle_forces_visible)
+        forces_visible_container.add_widget(forces_visible_switch_label)
+        forces_visible_container.add_widget(forces_visible_switch)
+        
+        return forces_visible_container, forces_visible_switch
 
     def add_stat_labels(self, game_area, root):
         self.total_energy_label = Label(text="Total Energy: 0", size_hint=(0.2, 0.1), pos_hint={'center_x': 0.18, 'center_y': .95})

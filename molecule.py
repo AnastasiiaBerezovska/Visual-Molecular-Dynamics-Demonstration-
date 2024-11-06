@@ -20,6 +20,7 @@ class Molecule(Widget):
         
         self.parentpos = kwargs.pop("parent_pos")
         self.parentsize = kwargs.pop("parent_size")
+        self.forces_visible = kwargs.pop("forces_visible")
         
         super().__init__(**kwargs)
         
@@ -211,6 +212,11 @@ class Molecule(Widget):
         Update the arrow direction, length, and color based on the total force.
         :param total_force: The total Lennard-Jones force applied to this molecule.
         """
+        
+        if not self.forces_visible:
+            self.arrow_line.points = []
+            return
+        
         # Calculate the arrow's end position based on the force magnitude and direction
         if self.total_force.length():
             force_magnitude = math.log(self.total_force.length()) / math.log(10) + 5
