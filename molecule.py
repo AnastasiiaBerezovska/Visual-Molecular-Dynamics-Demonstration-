@@ -30,7 +30,7 @@ class Molecule(Widget):
             self.color_instruction = Color(*self.color)  # Set initial color
             self.molecule_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
             self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
-            self.arrow_line = Line(points=[], width=4)  # Arrow to represent force
+            self.arrow_line = Line(points=[], width=4 * self.radius / 10)  # Arrow to represent force
             
     def fix_speed(self):
         
@@ -42,12 +42,23 @@ class Molecule(Widget):
         if self.total_force.length() > self.force_cap:
             self.total_force *= self.force_cap / self.total_force.length()
 
+    def fix_radius(self, new_radius):
+        self.pos = (self.pos[0] - new_radius + self.radius, self.pos[1] - new_radius + self.radius)
+        self.radius = new_radius
+        self.size = (self.radius * 2, self.radius * 2)
+        self.canvas.clear()
+        with self.canvas:
+            self.color_instruction = Color(*self.color)  # Set initial color
+            self.molecule_shape = Ellipse(pos=self.pos, size=self.size)  # Set initial position and size
+            self.arrow_color = Color(0, 0, 1, 1)  # Blue for initial arrow color
+            self.arrow_line = Line(points=[], width=4 * self.radius / 20)  # Arrow to represent force
+
     def move(self, delta):
         
         self.fix_force()
         
         self.pos = self.total_velocity * delta + 0.5 * self.total_force * (delta ** 2) + self.pos
-        self.molecule_shape.pos = self.pos  # Update the molecule's position in the canvas
+        self.molecule_shape.pos = (self.pos[0] - self.radius, self.pos[1] - self.radius) # Update the molecule's position in the canvas
         self.bounce_off_walls()
         
         self.total_velocity += self.total_force * delta
@@ -208,7 +219,7 @@ class Molecule(Widget):
         
         t = max(min(force_magnitude / 5, 1), 0)  # Scale t between 0 and 1 for color interpolation
         
-        arrow_length = self.radius * 2 * t # Limit arrow length to 30
+        arrow_length = self.radius * 3 * t # Limit arrow length to 30
         arrow_endpoint = Vector(self.center) + self.total_force.normalize() * arrow_length
 
         # Update the arrow points

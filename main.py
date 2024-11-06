@@ -66,15 +66,25 @@ class MyApp(App):
         speed_label = Label(text="Speed of Simulation (Y increase, H decrease)", size_hint=(0.3, None), height=50)
         speed_slider = Slider(min=0.1, max=1, value=1, step=0.1, size_hint=(0.7, None), height=50)
         speed_slider.bind(value=lambda instance, value: game_area.set_speed(value))
+        
+        size_box = BoxLayout(orientation='horizontal', spacing=10)
+        size_label = Label(text="Size of Molecules (U increase, J decrease)", size_hint=(0.3, None), height=50)
+        size_slider = Slider(min=0.2, max=1, value=0.6, step=0.05, size_hint=(0.7, None), height=50)
+        size_slider.bind(value=lambda instance, value: game_area.set_size(value))
+        
         speed_box.add_widget(speed_label)
         speed_box.add_widget(speed_slider)
+        size_box.add_widget(size_label)
+        size_box.add_widget(size_slider)
         
         game_area.speed_slider = speed_slider
+        game_area.size_slider = size_slider
 
         # Add the widgets to the bottom row layout
         bottom_row.add_widget(forces_container)
         bottom_row.add_widget(start_stop_button)
         bottom_row.add_widget(speed_box)
+        bottom_row.add_widget(size_box)
         bottom_row.add_widget(clear_button)
 
         # Add the bottom row to the root layout

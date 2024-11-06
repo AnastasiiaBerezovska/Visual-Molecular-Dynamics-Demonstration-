@@ -14,7 +14,7 @@ class GameLayout(Widget):
     sigma = NumericProperty(1.0)  # Lennard-Jones potential sigma
     spring_constant = 100.0
     spring_rest_length = 2.0
-    ball_radius_ratio = 0.015
+    molecule_radius_ratio = 0.03
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -25,7 +25,6 @@ class GameLayout(Widget):
 
         self.molecules = []  # List of all molecules in the game
         self.bonds = {}  # Dictionary to store Line objects for each bond
-        self.molecule_radius = self.size[0] * self.ball_radius_ratio # Radius of the molecule
         # print(self.molecule_radius)
         self.old_pos = self.pos[:]
         self.old_size = self.size[:]
@@ -36,6 +35,8 @@ class GameLayout(Widget):
         self.delta = 1 / 60.0  # Time step
         self.selected_molecule = None  # Track the first selected molecule for bonding
         self.simulation_running = False  # Track if simulation is running
+        self.size_factor = 0.6
+        self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor # Radius of the molecule
 
         # Variable to store the scheduled update event
         # self.update_event = None
@@ -58,11 +59,13 @@ class GameLayout(Widget):
             'delta_increase': 't',
             'delta_decrease': 'g',
             'speed_increase': 'y',
-            'speed_decrease': 'h'
+            'speed_decrease': 'h',
+            'size_increase' : 'u',
+            'size_decrease' : 'j'
         }
 
         # Schedule the update event
-        self.update_event = Clock.schedule_interval(self.update, 1 / 60.0)
+        self.update_event = None
         self.setup_keyboard()
         
     def setup_keyboard(self):
@@ -98,6 +101,10 @@ class GameLayout(Widget):
             self.adjust_speed(0.1)
         elif key == self.key_mapping['speed_decrease']:
             self.adjust_speed(-0.1)
+        elif key == self.key_mapping['size_increase']:
+            self.adjust_size(0.05)
+        elif key == self.key_mapping['size_decrease']:
+            self.adjust_size(-0.05)
         return True
 
     def adjust_gravity(self, change):
@@ -134,6 +141,16 @@ class GameLayout(Widget):
         if self.speed_slider:
             self.speed_slider.value = new_speed
         self.update_event = Clock.schedule_interval(self.update, 1 / 60.0 / new_speed)
+        
+    def adjust_size(self, change):
+        """Adjust size by a specified increment and update the slider."""
+        self.size_factor = max(0.2, min(self.size_factor + change, 1))
+        if self.size_slider:
+            self.size_slider.value = self.size_factor
+            
+        self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor
+        for molecule in self.molecules:
+            molecule.fix_radius(self.molecule_radius)
 
     def create_bond(self, molecule1, molecule2):
         """Creates a bond between two molecules and a Line object to represent it."""
@@ -207,7 +224,7 @@ class GameLayout(Widget):
         self.rect.pos = self.pos
         self.rect.size = self.size
         
-        self.molecule_radius = self.size[0] * self.ball_radius_ratio
+        self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor
         # Call the resize logic
         self.on_resize()
 
@@ -291,6 +308,14 @@ class GameLayout(Widget):
         # Schedule with the new interval based on the speed factor
         new_interval = (1 / 60.0) / speed_factor  # Adjust interval according to speed factor
         self.update_event = Clock.schedule_interval(self.update, new_interval)
+        
+    def set_size(self, size_factor):
+        """Adjust the simulation speed by setting a new interval."""
+        # Schedule with the new interval based on the speed factor
+        self.size_factor = size_factor
+        self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor
+        for molecule in self.molecules:
+            molecule.fix_radius(self.molecule_radius)
 
     def update(self, dt):
         """
@@ -303,11 +328,12 @@ class GameLayout(Widget):
             molecule.reset_total_force()
             molecule.add_force(Vector(0, -self.gravity))
             
-        print(self.molecule_radius)
+        self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor
         self.apply_spring_force()
 
         for i in range(len(self.molecules)):
             molecule1 = self.molecules[i]
+            molecule1.fix_radius(self.molecule_radius)
             for j in range(i + 1, len(self.molecules)):
                 molecule2 = self.molecules[j]
                 if molecule1.collide_widget(molecule2):
@@ -340,6 +366,7 @@ class GameLayout(Widget):
         # When the game layout is resized, rescale molecules' positions
         for molecule in self.molecules:
             molecule.rescale_position(self.pos[:], self.size[:])
+            molecule.fix_radius(self.molecule_radius)
 
     def set_gravity(self, value):
         """Update gravity for all molecules based on slider value."""
