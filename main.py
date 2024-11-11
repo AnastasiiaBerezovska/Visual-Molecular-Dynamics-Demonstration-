@@ -8,6 +8,7 @@ from kivy.uix.label import Label
 from kivy.uix.switch import Switch
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from game_layout import GameLayout  # Import GameLayout
+from HoverItem import HoverItem # Import HoverItem
 
 class MyApp(App):
     def build(self):
@@ -59,6 +60,7 @@ class MyApp(App):
         # Clear button
         clear_button = Button(text='Clear', size_hint=(0.3, None), height=50)
         clear_button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
+        clear_button = HoverItem(size_hint=(0.3, None), height=50, hoverSource="Graphics/Clear_Highlighted.png", defaultSource="Graphics/Clear.png", function=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
 
         # Start/Stop button
         start_stop_button = Button(text='Start', size_hint=(0.3, None), height=50)
