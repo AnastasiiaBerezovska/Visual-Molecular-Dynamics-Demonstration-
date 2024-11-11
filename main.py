@@ -58,13 +58,10 @@ class MyApp(App):
         forces_visible_container, forces_visible_switch = self.create_forces_visible_switch(game_area)
 
         # Clear button
-        clear_button = Button(text='Clear', size_hint=(0.3, None), height=50)
-        clear_button.bind(on_press=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
-        clear_button = HoverItem(size_hint=(0.3, None), height=50, hoverSource="Graphics/Clear_Highlighted.png", defaultSource="Graphics/Clear.png", function=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
+        clear_button = HoverItem(size_hint=(1, None), height=50, hoverSource="Graphics/Clear_Highlighted.png", defaultSource="Graphics/Clear.png", function=lambda x: (game_area.clear_widgets(), game_area.molecules.clear(), game_area.clear_bonds()))
 
         # Start/Stop button
-        start_stop_button = Button(text='Start', size_hint=(0.3, None), height=50)
-        start_stop_button.bind(on_press=lambda x: self.toggle_simulation(start_stop_button, game_area))
+        start_stop_button = HoverItem(size_hint=(1, None), height=50, hoverSource="Graphics/Start_Highlighted.png", defaultSource="Graphics/Start.png", function=lambda x: self.toggle_simulation(start_stop_button, game_area))
 
         # Speed control slider
         speed_box = BoxLayout(orientation='horizontal', spacing=10)
@@ -105,12 +102,16 @@ class MyApp(App):
         return root
 
     def toggle_simulation(self, button, game_area):
-        if button.text == 'Start':
+        if button.hoverSource == 'Graphics/Start_Highlighted.png':
             game_area.start_simulation()
-            button.text = 'Stop'
+            button.hoverSource = 'Graphics/Stop_Highlighted.png'
+            button.defaultSource = 'Graphics/Stop.png'
+            button.source = button.hoverSource if button.use else button.defaultSource
         else:
             game_area.stop_simulation()
-            button.text = 'Start'
+            button.hoverSource = 'Graphics/Start_Highlighted.png'
+            button.defaultSource = 'Graphics/Start.png'
+            button.source = button.hoverSource if button.use else button.defaultSource
 
     def create_slider_boxes(self, game_area):
         # Gravity label and slider
