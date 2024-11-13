@@ -6,6 +6,8 @@ from kivy.uix.slider import Slider
 from kivy.uix.button import Button
 from kivy.uix.label import Label
 from kivy.uix.switch import Switch
+from kivy.core.window import Window
+from kivy.uix.image import Image
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from game_layout import GameLayout  # Import GameLayout
 from HoverItem import HoverItem # Import HoverItem
@@ -89,17 +91,29 @@ class MyApp(App):
         bottom_row.add_widget(speed_box)
         bottom_row.add_widget(size_box)
         bottom_row.add_widget(clear_button)
+        
+        self.cursOr = Image()
+        self.cursOr.source = "Graphics/Cursor.png"
+        self.cursOr.size_hint = (0.02, 0.02)
+        self.cursOr.allow_stretch = True
 
         # Add the bottom row to the root layout
         root.add_widget(bottom_row)
-
+        
         # Add other panels and UI elements
         root.add_widget(ui_panel)
+        
+        root.add_widget(self.cursOr)
+        
+        Window.bind(mouse_pos=self.mPos)
         
         # Labels for stats, positioned using pos_hint
         self.add_stat_labels(game_area, root)
 
         return root
+
+    def mPos(self, window, pos):
+        self.cursOr.pos = (pos[0] - Window.width * 0.01, pos[1] - Window.height * 0.01)
 
     def toggle_simulation(self, button, game_area):
         if button.hoverSource == 'Graphics/Start_Highlighted.png':

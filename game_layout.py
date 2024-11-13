@@ -280,7 +280,7 @@ class GameLayout(Widget):
         vx = 300 * math.cos(angle)
         vy = 300 * math.sin(angle)
         
-        molecule = Molecule(molecule_center=(touch.pos[0] + 40, touch.pos[1] + 40), molecule_radius=self.molecule_radius, molecule_vx=vx, molecule_vy=vy,
+        molecule = Molecule(molecule_center=(touch.pos[0] + 50 - self.molecule_radius, touch.pos[1] + 50 - self.molecule_radius), molecule_radius=self.molecule_radius, molecule_vx=vx, molecule_vy=vy,
                     parent_pos=self.pos[:], parent_size=self.size[:], forces_visible=self.forces_visible)
 
         molecule.update_color_based_on_speed()  # Ensure the color is updated based on initial speed
