@@ -11,6 +11,7 @@ from kivy.uix.image import Image
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from game_layout import GameLayout  # Import GameLayout
 from HoverItem import HoverItem # Import HoverItem
+from TextBlurb import TextBlurb
 
 class MyApp(App):
     def build(self):
@@ -19,7 +20,7 @@ class MyApp(App):
 
         # Add a grey background to cover the entire UI
         with root.canvas.before:
-            Color(0.2, 0.2, 0.2, 1)  # Dark grey background
+            Color(0.05, 0.05, 0.05, 1)  # Dark grey background
             self.ui_rect = Rectangle(pos=root.pos, size=root.size)
 
         # Bind the position and size of the grey background to the root layout
@@ -96,6 +97,9 @@ class MyApp(App):
         self.cursOr.source = "Graphics/Cursor.png"
         self.cursOr.size_hint = (0.02, 0.02)
         self.cursOr.allow_stretch = True
+        
+        self.query_lennard_jones = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.98, "y":0.23}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_lennard_info())
+        self.lennard_jones_text = TextBlurb(text="The Lennard-Jones potential is a simple model that still manages to describe the essential features of interactions between simple atoms and molecules: Two interacting particles repel each other at very close distance, attract each other at moderate distance, and eventually stop interacting at infinite distance, as shown in the Figure. The Lennard-Jones potential is a pair potential, i.e. no three- or multi-body interactions are covered by the potential.", pos_hint={"center_x":0.9, "y":0.4})
 
         # Add the bottom row to the root layout
         root.add_widget(bottom_row)
@@ -103,9 +107,12 @@ class MyApp(App):
         # Add other panels and UI elements
         root.add_widget(ui_panel)
         
-        root.add_widget(self.cursOr)
+        root.add_widget(self.query_lennard_jones)
+        root.add_widget(self.lennard_jones_text)
         
         Window.bind(mouse_pos=self.mPos)
+        root.add_widget(self.cursOr)
+        
         
         # Labels for stats, positioned using pos_hint
         self.add_stat_labels(game_area, root)
@@ -120,12 +127,21 @@ class MyApp(App):
             game_area.start_simulation()
             button.hoverSource = 'Graphics/Stop_Highlighted.png'
             button.defaultSource = 'Graphics/Stop.png'
-            button.source = button.hoverSource if button.use else button.defaultSource
         else:
             game_area.stop_simulation()
             button.hoverSource = 'Graphics/Start_Highlighted.png'
             button.defaultSource = 'Graphics/Start.png'
-            button.source = button.hoverSource if button.use else button.defaultSource
+        button.source = button.hoverSource if button.use else button.defaultSource
+            
+    def toggle_lennard_info(self):
+        if self.query_lennard_jones.hoverSource == 'Graphics/Query_Highlighted.png':
+            self.query_lennard_jones.hoverSource = 'Graphics/Query_On_Highlighted.png'
+            self.query_lennard_jones.defaultSource = 'Graphics/Query_On.png'
+        else:
+            self.query_lennard_jones.hoverSource = 'Graphics/Query_Highlighted.png'
+            self.query_lennard_jones.defaultSource = 'Graphics/Query.png'
+        self.query_lennard_jones.source = self.query_lennard_jones.hoverSource if self.query_lennard_jones.use else self.query_lennard_jones.defaultSource
+        self.lennard_jones_text.toggle_visibility()
 
     def create_slider_boxes(self, game_area):
         # Gravity label and slider
@@ -204,7 +220,7 @@ class MyApp(App):
         """ Update the grey background dynamically when the window size changes """
         instance.canvas.before.clear()
         with instance.canvas.before:
-            Color(0.2, 0.2, 0.2, 1)  # Grey background for the entire screen
+            Color(0.1, 0.1, 0.1, 1)  # Grey background for the entire screen
             self.ui_rect = Rectangle(pos=instance.pos, size=instance.size)
         
         # Force canvas update
