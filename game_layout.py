@@ -398,3 +398,58 @@ class GameLayout(Widget):
         for molecule in self.molecules:
             molecule.forces_visible = self.forces_visible
             molecule.update_force_arrow()
+
+    def generate_solid(self):
+        """Generate a solid-like arrangement of molecules."""
+        self.clear_molecules()
+        rows, cols = 11, 25
+        spacing_x = self.size[0] * 0.039
+        spacing_y = self.size[1] * 0.09
+        start_x = self.pos[0] + spacing_x
+        start_y = self.pos[1] + spacing_y
+
+        for row in range(rows):
+            for col in range(cols):
+                x = start_x + col * spacing_x
+                y = start_y + row * spacing_y
+                self.create_molecule(x, y, 0, 0)
+
+    def generate_liquid(self):
+        """Generate a liquid-like arrangement of molecules."""
+        self.clear_molecules()
+        for _ in range(50):  # Create 50 molecules
+            x = uniform(self.pos[0] + 50, self.pos[0] + self.size[0] - 50)
+            y = uniform(self.pos[1] + 50, self.pos[1] + self.size[1] - 50)
+            vx = uniform(-50, 50)
+            vy = uniform(-50, 50)
+            self.create_molecule(x, y, vx, vy)
+
+    def generate_gas(self):
+        """Generate a gas-like arrangement of molecules."""
+        self.clear_molecules()
+        for _ in range(15):  # Create 30 molecules
+            x = uniform(self.pos[0] + 50, self.pos[0] + self.size[0] - 50)
+            y = uniform(self.pos[1] + 50, self.pos[1] + self.size[1] - 50)
+            vx = uniform(-200, 200)
+            vy = uniform(-200, 200)
+            self.create_molecule(x, y, vx, vy)
+
+    def clear_molecules(self):
+        """Clear all molecules from the canvas and list."""
+        for molecule in self.molecules:
+            self.remove_widget(molecule)
+        self.molecules.clear()
+
+    def create_molecule(self, x, y, vx, vy):
+        """Create and add a molecule to the game layout."""
+        molecule = Molecule(
+            molecule_center=(x, y),
+            molecule_radius=self.size[0] * self.molecule_radius_ratio * self.size_factor,
+            molecule_vx=vx,
+            molecule_vy=vy,
+            parent_pos=self.pos[:],
+            parent_size=self.size[:],
+            forces_visible=self.forces_visible,
+        )
+        self.add_widget(molecule)
+        self.molecules.append(molecule)
