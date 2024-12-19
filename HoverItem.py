@@ -34,4 +34,5 @@ class HoverItem(Image, HoverBehavior):
             self.source = self.hoverSource
             self.function(0)
             return True  # Consume the touch event
+        self.use = False
         return super().on_touch_down(touch)
