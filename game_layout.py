@@ -15,6 +15,7 @@ class GameLayout(Widget):
     spring_constant = 100.0
     spring_rest_length = 2.0
     molecule_radius_ratio = 0.03
+    use_verlet = True
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -317,6 +318,9 @@ class GameLayout(Widget):
         self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor
         for molecule in self.molecules:
             molecule.fix_radius(self.molecule_radius)
+            
+    def toggle_update_mode(self):
+        self.use_verlet = not self.use_verlet
 
     def update(self, dt):
         """
@@ -348,7 +352,12 @@ class GameLayout(Widget):
                     molecule2.add_force(-force)
                     
             molecule1.update_force_arrow()
-            molecule1.move(self.delta)
+            if self.use_verlet:
+                molecule1.speed_cap = 500
+                molecule1.move(self.delta)
+            else:
+                molecule1.speed_cap = 8
+                molecule1.move_nonVerlet()
 
             # Calculate kinetic energy
             kinetic_energy = 0.5 * (molecule1.total_velocity.length2())

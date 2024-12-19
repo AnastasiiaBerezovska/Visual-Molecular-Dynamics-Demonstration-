@@ -69,6 +69,19 @@ class Molecule(Widget):
         
         self.update_color_based_on_speed()
         self.update_force_arrow()
+        
+    def move_nonVerlet(self):
+        
+        self.total_velocity += self.total_force
+        self.fix_speed()
+        
+        
+        self.pos = self.total_velocity + self.pos
+        self.molecule_shape.pos = self.pos  # Update the ball's position in the canvas
+        self.bounce_off_walls()
+        
+        self.update_color_based_on_speed()
+        self.update_force_arrow()
 
     def bounce_off_walls(self):
         # Bounce off the walls of the layout, accounting for the molecule's size

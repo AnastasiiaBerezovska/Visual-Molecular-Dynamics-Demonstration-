@@ -39,7 +39,7 @@ class MyApp(App):
     def add_background(self, root):
         """Add a grey background and bind its size/position to root."""
         with root.canvas.before:
-            Color(0.05, 0.05, 0.05, 1)
+            Color(0.2, 0.2, 0.2, 1)
             self.ui_rect = Rectangle(pos=root.pos, size=root.size)
         root.bind(pos=self.update_ui_background, size=self.update_ui_background)
 
@@ -85,6 +85,10 @@ class MyApp(App):
         root.add_widget(ui_panel)
         root.add_widget(bottom_row)
         self.add_stat_labels(root)
+        self.query_lennard_jones = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.98, "y":0.23}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_lennard_info())
+        self.lennard_jones_text = TextBlurb(text="The Lennard-Jones potential is a simple model that still manages to describe the essential features of interactions between simple atoms and molecules: Two interacting particles repel each other at very close distance, attract each other at moderate distance, and eventually stop interacting at infinite distance, as shown in the Figure. The Lennard-Jones potential is a pair potential, i.e. no three- or multi-body interactions are covered by the potential.", pos_hint={"center_x":0.9, "y":0.4})
+        root.add_widget(self.query_lennard_jones)
+        root.add_widget(self.lennard_jones_text)
 
     def create_sliders(self):
         """Create the slider UI for gravity, epsilon, sigma, and delta."""
@@ -95,6 +99,17 @@ class MyApp(App):
         ui_panel.add_widget(sigma_box)
         ui_panel.add_widget(delta_box)
         return ui_panel
+    
+    def toggle_lennard_info(self):
+        if self.query_lennard_jones.hoverSource == 'Graphics/Query_Highlighted.png':
+            self.query_lennard_jones.hoverSource = 'Graphics/Query_On_Highlighted.png'
+            self.query_lennard_jones.defaultSource = 'Graphics/Query_On.png'
+        else:
+            self.query_lennard_jones.hoverSource = 'Graphics/Query_Highlighted.png'
+            self.query_lennard_jones.defaultSource = 'Graphics/Query.png'
+        self.query_lennard_jones.source = self.query_lennard_jones.hoverSource if self.query_lennard_jones.use else self.query_lennard_jones.defaultSource
+        self.lennard_jones_text.toggle_visibility()
+
 
     def create_bottom_controls(self):
         """Create the bottom controls with switches and buttons."""
@@ -102,13 +117,15 @@ class MyApp(App):
 
         forces_container, _ = self.create_forces_switch()
         forces_visible_container, _ = self.create_forces_visible_switch()
-        clear_button = self.create_hover_button("Clear", self.clear_game_area)
-        start_stop_button = self.create_hover_button("Start", self.toggle_simulation)
+        self.clear_button = self.create_hover_button("Clear", self.clear_game_area)
+        self.start_stop_button = self.create_hover_button("Start", self.toggle_simulation)
+        self.verlet_button = self.create_hover_button("Verlet-Off", self.toggle_verlet_mode)
 
         bottom_row.add_widget(forces_container)
         bottom_row.add_widget(forces_visible_container)
-        bottom_row.add_widget(start_stop_button)
-        bottom_row.add_widget(clear_button)
+        bottom_row.add_widget(self.start_stop_button)
+        bottom_row.add_widget(self.clear_button)
+        bottom_row.add_widget(self.verlet_button)
         return bottom_row
 
     def create_slider_boxes(self):
@@ -142,9 +159,26 @@ class MyApp(App):
     def toggle_simulation(self):
         """Toggle the simulation state."""
         if self.game_area.simulation_running:
+            self.start_stop_button.hoverSource="Graphics/Start_Highlighted.png"
+            self.start_stop_button.defaultSource="Graphics/Start.png"
+            self.start_stop_button.source = self.start_stop_button.hoverSource if self.start_stop_button.use else self.start_stop_button.defaultSource
             self.game_area.stop_simulation()
         else:
+            self.start_stop_button.hoverSource="Graphics/Stop_Highlighted.png"
+            self.start_stop_button.defaultSource="Graphics/Stop.png"
+            self.start_stop_button.source = self.start_stop_button.hoverSource if self.start_stop_button.use else self.start_stop_button.defaultSource
             self.game_area.start_simulation()
+            
+    def toggle_verlet_mode(self):
+        """Toggle between Verlet and non-Verlet updates."""
+        if self.game_area.use_verlet:
+            self.verlet_button.hoverSource="Graphics/Verlet-On_Highlighted.png"
+            self.verlet_button.defaultSource="Graphics/Verlet-On.png"
+        else:
+            self.verlet_button.hoverSource="Graphics/Verlet-Off_Highlighted.png"
+            self.verlet_button.defaultSource="Graphics/Verlet-Off.png"
+        self.verlet_button.source = self.verlet_button.hoverSource if self.verlet_button.use else self.verlet_button.defaultSource
+        self.game_area.toggle_update_mode()
 
     def clear_game_area(self):
         """Clear the game area of all molecules and bonds."""
