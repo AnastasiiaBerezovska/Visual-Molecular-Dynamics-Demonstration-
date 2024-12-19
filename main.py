@@ -39,7 +39,7 @@ class MyApp(App):
     def add_background(self, root):
         """Add a grey background and bind its size/position to root."""
         with root.canvas.before:
-            Color(0.2, 0.2, 0.2, 1)
+            Color(0.1, 0.1, 0.1, 1)
             self.ui_rect = Rectangle(pos=root.pos, size=root.size)
         root.bind(pos=self.update_ui_background, size=self.update_ui_background)
 
@@ -50,7 +50,7 @@ class MyApp(App):
 
     def add_preset_spinner(self, root):
         """Add the preset spinner to the bottom control section."""
-        spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.3, None), height=40, pos_hint={'center_x': 0.15, 'y': 0.15})
+        spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.3, None), height=40, pos_hint={'center_x': 0.15, 'y': 0.1})
 
         # Label for the preset spinner
         preset_label = Label(text="Presets:", size_hint=(0.4, 1), font_size=14)
@@ -85,19 +85,56 @@ class MyApp(App):
         root.add_widget(ui_panel)
         root.add_widget(bottom_row)
         self.add_stat_labels(root)
+        
         self.query_lennard_jones = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.98, "y":0.23}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_lennard_info())
         self.lennard_jones_text = TextBlurb(text="The Lennard-Jones potential is a simple model that still manages to describe the essential features of interactions between simple atoms and molecules: Two interacting particles repel each other at very close distance, attract each other at moderate distance, and eventually stop interacting at infinite distance, as shown in the Figure. The Lennard-Jones potential is a pair potential, i.e. no three- or multi-body interactions are covered by the potential.", pos_hint={"center_x":0.9, "y":0.4})
+        
+        self.cursOr = Image()
+        self.cursOr.source = "Graphics/Cursor.png"
+        self.cursOr.size_hint = (0.02, 0.02)
+        self.cursOr.allow_stretch = True
+        
         root.add_widget(self.query_lennard_jones)
         root.add_widget(self.lennard_jones_text)
+        
+        Window.bind(mouse_pos=self.mPos)
+        root.add_widget(self.cursOr)
+
+
+    def mPos(self, window, pos):
+        self.cursOr.pos = (pos[0] - Window.width * 0.01, pos[1] - Window.height * 0.01)
+
 
     def create_sliders(self):
-        """Create the slider UI for gravity, epsilon, sigma, and delta."""
-        ui_panel = GridLayout(cols=2, rows=2, size_hint=(0.9, 0.1), pos_hint={'center_x': 0.5, 'y': 0.2})
-        gravity_box, epsilon_box, sigma_box, delta_box = self.create_slider_boxes()
+        """Create the slider UI for gravity, delta, sigma, epsilon, speed, and size."""
+        ui_panel = GridLayout(cols=3, rows=2, size_hint=(0.9, 0.15), pos_hint={'center_x': 0.5, 'y': 0.2})
+
+        # Sliders for gravity, epsilon, sigma, delta
+        gravity_box, gravity_slider = self.create_slider("Gravity (W increase, S decrease)", 0, 10, 0, 0.01, self.game_area.set_gravity)
+        epsilon_box, epsilon_slider = self.create_slider("Epsilon (Potential Depth used for Lennard-Jones force between Molecules) (E increase, D decrease)", 0, 10, 1, 0.1, self.game_area.set_epsilon)
+        sigma_box, sigma_slider = self.create_slider("Sigma (Potential Distance used for Lennard-Jones force between Molecules) (R increase, F decrease)", 0.1, 3, 1, 0.01, self.game_area.set_sigma)
+        delta_box, delta_slider = self.create_slider("Delta (Timestep update for Verlet's Algorithm) (T increase, G decrease)", 0, 1, 1 / 60.0, 1 / 60.0, self.game_area.set_delta)
+
+        # Speed and size sliders
+        speed_box, speed_slider = self.create_slider("Speed of Simulation (Y increase, H decrease)", 0.1, 1, 1, 0.1, self.game_area.set_speed)
+        size_box, size_slider = self.create_slider("Size of Molecules (U increase, J decrease)", 0.2, 1, 0.6, 0.05, self.game_area.set_size)
+
+        # Add sliders to the grid layout in a 3x2 formation
         ui_panel.add_widget(gravity_box)
         ui_panel.add_widget(epsilon_box)
         ui_panel.add_widget(sigma_box)
         ui_panel.add_widget(delta_box)
+        ui_panel.add_widget(speed_box)
+        ui_panel.add_widget(size_box)
+        
+        self.game_area.gravity_slider = gravity_slider
+        self.game_area.epsilon_slider = epsilon_slider
+        self.game_area.sigma_slider = sigma_slider
+        self.game_area.delta_slider = delta_slider
+        self.game_area.speed_slider = speed_slider
+        self.game_area.size_slider = size_slider
+
+
         return ui_panel
     
     def toggle_lennard_info(self):
@@ -113,7 +150,7 @@ class MyApp(App):
 
     def create_bottom_controls(self):
         """Create the bottom controls with switches and buttons."""
-        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.1})
+        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.05})
 
         forces_container, _ = self.create_forces_switch()
         forces_visible_container, _ = self.create_forces_visible_switch()
@@ -128,23 +165,15 @@ class MyApp(App):
         bottom_row.add_widget(self.verlet_button)
         return bottom_row
 
-    def create_slider_boxes(self):
-        """Create individual sliders for game parameters."""
-        gravity_box = self.create_slider("Gravity", 0, 10, 0, self.game_area.set_gravity)
-        epsilon_box = self.create_slider("Epsilon", 0, 10, 1, self.game_area.set_epsilon)
-        sigma_box = self.create_slider("Sigma", 0.1, 3, 1, self.game_area.set_sigma)
-        delta_box = self.create_slider("Delta", 0, 1, 1 / 60.0, self.game_area.set_delta)
-        return gravity_box, epsilon_box, sigma_box, delta_box
-
-    def create_slider(self, label_text, min_value, max_value, default_value, callback):
+    def create_slider(self, label_text, min_value, max_value, default_value, step_value, callback):
         """Helper to create labeled sliders."""
         box = BoxLayout(orientation='horizontal')
         label = Label(text=label_text, size_hint=(0.3, None), height=10)
-        slider = Slider(min=min_value, max=max_value, value=default_value, size_hint=(0.7, None), height=10)
+        slider = Slider(min=min_value, max=max_value, value=default_value, step=step_value, size_hint=(0.7, None), height=10)
         slider.bind(value=lambda instance, value: callback(value))
         box.add_widget(label)
         box.add_widget(slider)
-        return box
+        return box, slider
 
     def create_hover_button(self, label, callback):
         """Helper to create buttons with hover effects."""

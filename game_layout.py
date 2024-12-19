@@ -135,14 +135,13 @@ class GameLayout(Widget):
 
     def adjust_speed(self, change):
         """Adjust simulation speed factor by a specified increment and update the slider."""
-        new_speed = max(0.1, min(self.speed_slider.value + change, 3)) if self.speed_slider else 1.0
-        if self.update_event:
-            self.update_event.cancel()
+        new_speed = max(0.1, min(self.speed_slider.value + change, 1)) if self.speed_slider else 1.0
 
         # Update speed slider and reschedule with new interval
         if self.speed_slider:
             self.speed_slider.value = new_speed
-        self.update_event = Clock.schedule_interval(self.update, 1 / 60.0 / new_speed)
+        
+        self.set_speed(new_speed)
         
     def adjust_size(self, change):
         """Adjust size by a specified increment and update the slider."""
