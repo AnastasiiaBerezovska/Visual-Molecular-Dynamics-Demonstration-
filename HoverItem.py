@@ -28,5 +28,10 @@ class HoverItem(Image, HoverBehavior):
         self.source = self.defaultSource
 
     def on_touch_down(self, touch):
-        if self.use:
+        if self.collide_point(*touch.pos):
+            # Simulate hover effect when touched
+            self.use = True
+            self.source = self.hoverSource
             self.function(0)
+            return True  # Consume the touch event
+        return super().on_touch_down(touch)
