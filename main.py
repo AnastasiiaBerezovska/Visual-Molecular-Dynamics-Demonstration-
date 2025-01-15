@@ -13,6 +13,8 @@ from kivy.graphics import Color, Ellipse, Rectangle, Line
 from game_layout import GameLayout  # Import GameLayout
 from HoverItem import HoverItem # Import HoverItem
 from TextBlurb import TextBlurb
+from CustomSlider import CustomSlider
+
 
 class MyApp(App):
     def build(self):
@@ -169,7 +171,19 @@ class MyApp(App):
         """Helper to create labeled sliders."""
         box = BoxLayout(orientation='horizontal')
         label = Label(text=label_text, size_hint=(0.3, None), height=10)
-        slider = Slider(min=min_value, max=max_value, value=default_value, step=step_value, size_hint=(0.7, None), height=10)
+        if False:
+            slider = Slider(min=min_value, max=max_value, value=default_value, step=step_value, size_hint=(0.7, None), height=10)
+        else:
+            slider = CustomSlider(
+                min=min_value,
+                max=max_value,
+                value=default_value,
+                step=step_value,
+                track_image="Graphics/SliderTrack.png",
+                thumb_image="Graphics/SliderThumb.png",
+                size_hint=(0.7,None),
+                height=10
+            )
         slider.bind(value=lambda instance, value: callback(value))
         box.add_widget(label)
         box.add_widget(slider)
