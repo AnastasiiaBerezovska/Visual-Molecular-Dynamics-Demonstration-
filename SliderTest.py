@@ -10,7 +10,8 @@ class TestApp(App):
             min=0,
             max=100,
             value=50,
-            step = 5,
+            step=5,
+            size=(100,50),
             track_image="Graphics/SliderTrack.png",
             thumb_image="Graphics/SliderThumb.png"
         )

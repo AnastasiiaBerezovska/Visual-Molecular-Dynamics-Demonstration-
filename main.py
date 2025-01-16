@@ -181,6 +181,7 @@ class MyApp(App):
                 step=step_value,
                 track_image="Graphics/SliderTrack.png",
                 thumb_image="Graphics/SliderThumb.png",
+                slider_length=200,
                 size_hint=(0.7,None),
                 height=10
             )
