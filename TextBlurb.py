@@ -15,6 +15,8 @@ class TextBlurb(BoxLayout):
     font_path = os.path.join(os.path.dirname(__file__), "Fonts/Impact.ttf")
 
     def __init__(self, **kwargs):
+        self.parent_size_prop = kwargs.pop("parent_size_prop")
+        self.parent_pos_prop = kwargs.pop("parent_pos_prop")
         super().__init__(orientation='vertical', **kwargs)
         self.size_hint = (None, None)  # Explicit size control
         self.size = (400, 200)  # Initial size of the widget
@@ -90,8 +92,8 @@ class TextBlurb(BoxLayout):
     def _resize_with_parent(self, *args):
         """Resize and reposition the widget dynamically with its parent."""
         if self.parent:
-            self.size = (self.parent.width * 0.4, self.parent.height * 0.2)  # Scale size relative to parent
-            self.pos = (self.parent.width * 0.3, self.parent.height * 0.4)  # Position relative to parent
+            self.size = (self.parent.width * self.parent_size_prop[0], self.parent.height * self.parent_size_prop[1])  # Scale size relative to parent
+            self.pos = (self.parent.width * (self.parent_pos_prop[0] - self.parent_size_prop[0] * .5), self.parent.height * (self.parent_pos_prop[1] - self.parent_size_prop[1] * .5))  # Position relative to parent
 
             # Update the background rectangle
             self.bg_rect.pos = self.pos
