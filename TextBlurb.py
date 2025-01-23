@@ -41,6 +41,7 @@ class TextBlurb(BoxLayout):
 
         # Trigger initial layout update
         self._update_text_layout()
+        self.bind(parent=self._bind_parent_events)
 
     def toggle_visibility(self):
         """Toggle the visibility of the text blurb."""
@@ -79,3 +80,22 @@ class TextBlurb(BoxLayout):
             self.x + self.padding[0],
             self.y + self.padding[0],
         )
+        
+    def _bind_parent_events(self, instance, parent):
+        """Bind size and position changes of the parent."""
+        if parent:
+            parent.bind(size=self._resize_with_parent, pos=self._resize_with_parent)
+            self._resize_with_parent()
+
+    def _resize_with_parent(self, *args):
+        """Resize and reposition the widget dynamically with its parent."""
+        if self.parent:
+            self.size = (self.parent.width * 0.4, self.parent.height * 0.2)  # Scale size relative to parent
+            self.pos = (self.parent.width * 0.3, self.parent.height * 0.4)  # Position relative to parent
+
+            # Update the background rectangle
+            self.bg_rect.pos = self.pos
+            self.bg_rect.size = self.size
+
+            # Update the label text size
+            self.text_label.text_size = (self.width - self.padding[0] - self.padding[2], None)
