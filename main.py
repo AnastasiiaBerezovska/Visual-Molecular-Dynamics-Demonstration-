@@ -88,8 +88,11 @@ class MyApp(App):
         root.add_widget(bottom_row)
         self.add_stat_labels(root)
         
-        self.query_lennard_jones = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.98, "y":0.23}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_lennard_info())
-        self.lennard_jones_text = TextBlurb(text="The Lennard-Jones potential is a simple model that still manages to describe the essential features of interactions between simple atoms and molecules: Two interacting particles repel each other at very close distance, attract each other at moderate distance, and eventually stop interacting at infinite distance, as shown in the Figure. The Lennard-Jones potential is a pair potential, i.e. no three- or multi-body interactions are covered by the potential.", pos_hint={"center_x":0.9, "y":0.4})
+        self.lennard_jones_text = TextBlurb(text="Lennard-Jones potential: a simple mathematical model that describes the attractive and repulsive forces between atoms or molecules, like how they pull towards each other at a moderate distance but push away when very close.", pos_hint={"center_x":0.9, "y":0.4})
+        self.query_lennard_jones = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.98, "y":0.23}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_info(self.query_lennard_jones, self.lennard_jones_text))
+        
+        self.verlet_text = TextBlurb(text="Verlet algorithm: a method used to calculate the movement of these particles in a simulation, allowing us to track how they interact based on the Lennard-Jones potential over time.", pos_hint={"center_x":0.87, "y":0.1})
+        self.query_verlet = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.75, "y":0.1}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_info(self.query_verlet, self.verlet_text))
         
         self.cursOr = Image()
         self.cursOr.source = "Graphics/Cursor.png"
@@ -98,6 +101,9 @@ class MyApp(App):
         
         root.add_widget(self.query_lennard_jones)
         root.add_widget(self.lennard_jones_text)
+        
+        root.add_widget(self.query_verlet)
+        root.add_widget(self.verlet_text)
         
         Window.bind(mouse_pos=self.mPos)
         root.add_widget(self.cursOr)
@@ -139,15 +145,15 @@ class MyApp(App):
 
         return ui_panel
     
-    def toggle_lennard_info(self):
-        if self.query_lennard_jones.hoverSource == 'Graphics/Query_Highlighted.png':
-            self.query_lennard_jones.hoverSource = 'Graphics/Query_On_Highlighted.png'
-            self.query_lennard_jones.defaultSource = 'Graphics/Query_On.png'
+    def toggle_info(self, button, text):
+        if button.hoverSource == 'Graphics/Query_Highlighted.png':
+            button.hoverSource = 'Graphics/Query_On_Highlighted.png'
+            button.defaultSource = 'Graphics/Query_On.png'
         else:
-            self.query_lennard_jones.hoverSource = 'Graphics/Query_Highlighted.png'
-            self.query_lennard_jones.defaultSource = 'Graphics/Query.png'
-        self.query_lennard_jones.source = self.query_lennard_jones.hoverSource if self.query_lennard_jones.use else self.query_lennard_jones.defaultSource
-        self.lennard_jones_text.toggle_visibility()
+            button.hoverSource = 'Graphics/Query_Highlighted.png'
+            button.defaultSource = 'Graphics/Query.png'
+        button.source = button.hoverSource if button.use else button.defaultSource
+        text.toggle_visibility()
 
 
     def create_bottom_controls(self):
