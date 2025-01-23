@@ -14,6 +14,7 @@ from game_layout import GameLayout  # Import GameLayout
 from HoverItem import HoverItem # Import HoverItem
 from TextBlurb import TextBlurb
 from CustomSlider import CustomSlider
+from SliderBox import SliderBox
 
 
 class MyApp(App):
@@ -119,18 +120,36 @@ class MyApp(App):
 
     def create_sliders(self):
         """Create the slider UI for gravity, delta, sigma, epsilon, speed, and size."""
-        ui_panel = GridLayout(cols=3, rows=2, size_hint=(0.9, 0.15), pos_hint={'center_x': 0.5, 'y': 0.2})
+        ui_panel = GridLayout(cols=3,
+                              rows=2,
+                              size_hint=(0.9, 0.15),
+                              pos_hint={'center_x': 0.5, 'y': 0.2},
+                              spacing=(20, 10),  # Horizontal and vertical spacing (in pixels)
+                              padding=[10, 10, 10, 10]  # Padding around the entire grid (left, top, right, bottom))
+        )
 
-        # Sliders for gravity, epsilon, sigma, delta
-        gravity_box, gravity_slider = self.create_slider("Gravity (W increase, S decrease)", 0, 10, 0, 0.01, self.game_area.set_gravity)
-        epsilon_box, epsilon_slider = self.create_slider("Epsilon (Potential Depth used for Lennard-Jones force between Molecules) (E increase, D decrease)", 0, 10, 1, 0.1, self.game_area.set_epsilon)
-        sigma_box, sigma_slider = self.create_slider("Sigma (Potential Distance used for Lennard-Jones force between Molecules) (R increase, F decrease)", 0.1, 3, 1, 0.01, self.game_area.set_sigma)
-        delta_box, delta_slider = self.create_slider("Delta (Timestep update for Verlet's Algorithm) (T increase, G decrease)", 0, 1, 1 / 60.0, 1 / 60.0, self.game_area.set_delta)
-
-        # Speed and size sliders
-        speed_box, speed_slider = self.create_slider("Speed of Simulation (Y increase, H decrease)", 0.1, 1, 1, 0.1, self.game_area.set_speed)
-        size_box, size_slider = self.create_slider("Size of Molecules (U increase, J decrease)", 0.2, 1, 0.6, 0.05, self.game_area.set_size)
-
+        gravity_box = SliderBox(
+            "Gravity (W increase, S decrease)", 0, 10, 0, 0.01, self.game_area.set_gravity
+        )
+        epsilon_box = SliderBox(
+            "Epsilon (Potential Depth used for Lennard-Jones force between Molecules) (E increase, D decrease)",
+            0, 10, 1, 0.1, self.game_area.set_epsilon
+        )
+        sigma_box = SliderBox(
+            "Sigma (Potential Distance used for Lennard-Jones force between Molecules) (R increase, F decrease)",
+            0.1, 3, 1, 0.01, self.game_area.set_sigma
+        )
+        delta_box = SliderBox(
+            "Delta (Timestep update for Verlet's Algorithm) (T increase, G decrease)",
+            0, 1, 1 / 60.0, 1 / 60.0, self.game_area.set_delta
+        )
+        speed_box = SliderBox(
+            "Speed of Simulation (Y increase, H decrease)", 0.1, 1, 1, 0.1, self.game_area.set_speed
+        )
+        size_box = SliderBox(
+            "Size of Molecules (U increase, J decrease)", 0.2, 1, 0.6, 0.05, self.game_area.set_size
+        )
+        
         # Add sliders to the grid layout in a 3x2 formation
         ui_panel.add_widget(gravity_box)
         ui_panel.add_widget(epsilon_box)
@@ -139,12 +158,12 @@ class MyApp(App):
         ui_panel.add_widget(speed_box)
         ui_panel.add_widget(size_box)
         
-        self.game_area.gravity_slider = gravity_slider
-        self.game_area.epsilon_slider = epsilon_slider
-        self.game_area.sigma_slider = sigma_slider
-        self.game_area.delta_slider = delta_slider
-        self.game_area.speed_slider = speed_slider
-        self.game_area.size_slider = size_slider
+        self.game_area.gravity_slider = gravity_box.slider
+        self.game_area.epsilon_slider = epsilon_box.slider
+        self.game_area.sigma_slider = sigma_box.slider
+        self.game_area.delta_slider = delta_box.slider
+        self.game_area.speed_slider = speed_box.slider
+        self.game_area.size_slider = size_box.slider
 
 
         return ui_panel
