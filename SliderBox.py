@@ -21,7 +21,7 @@ class SliderBox(BoxLayout):
         with self.canvas.before:
             Color(0.2, 0.2, 0.2, 1)  # Background color
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
-            Color(0, 0, 1, 1)  # Blue border
+            Color(67/255, 157/255, 1, 1)  # Blue border
             self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=2)
 
         # Bind position and size changes to update the background and border
