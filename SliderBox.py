@@ -2,15 +2,20 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.label import Label
 from kivy.uix.slider import Slider
 from kivy.graphics import Color, Rectangle, Line
+import os
 
 
 class SliderBox(BoxLayout):
     """A widget that encapsulates a slider with a label, a background, and a border."""
+    
     def __init__(self, label_text, min_value, max_value, default_value, step, callback, **kwargs):
         super().__init__(**kwargs)
         self.orientation = 'vertical'
-        self.size_hint = (None, None)
-        self.size = (300, 100)  # Default size
+        self.font_path = os.path.join(os.path.dirname(__file__), "Fonts/Impact.ttf")
+        self.base_font_size = 10
+        self.font_scale_factor = 1
+        # self.size_hint = (None, None)
+        # self.size = (300, 100)
 
         # Add background and border
         with self.canvas.before:
@@ -21,15 +26,17 @@ class SliderBox(BoxLayout):
 
         # Bind position and size changes to update the background and border
         self.bind(pos=self.update_graphics, size=self.update_graphics)
+        self.bind(size=self._update_label_text_size)
 
         # Add label
         self.label = Label(
             text=label_text,
             size_hint=(1, 0.4),
+            font_name=self.font_path,
+            font_size=10,
             halign='center',
             valign='middle'
         )
-        self.label.bind(size=self._update_label_text_size)
         self.add_widget(self.label)
 
         # Add slider
@@ -49,6 +56,7 @@ class SliderBox(BoxLayout):
         self.bg_rect.size = self.size
         self.border.rectangle = (self.x, self.y, self.width, self.height)
 
-    def _update_label_text_size(self, instance, value):
+    def _update_label_text_size(self, *args):
         """Ensure the label text fits within the box."""
-        self.label.text_size = (self.label.width, None)
+        self.label.height = self.height * .3
+        self.label.font_size = self.height * .2

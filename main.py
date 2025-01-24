@@ -122,14 +122,15 @@ class MyApp(App):
         """Create the slider UI for gravity, delta, sigma, epsilon, speed, and size."""
         ui_panel = GridLayout(cols=3,
                               rows=2,
-                              size_hint=(0.9, 0.15),
-                              pos_hint={'center_x': 0.5, 'y': 0.2},
-                              spacing=(20, 10),  # Horizontal and vertical spacing (in pixels)
+                              size_hint=(0.8, 0.15),
+                              pos_hint={'center_x': 0.5, 'center_y': 0.22},
+                              spacing=(20, 20),  # Horizontal and vertical spacing (in pixels)
                               padding=[10, 10, 10, 10]  # Padding around the entire grid (left, top, right, bottom))
         )
 
         gravity_box = SliderBox(
-            "Gravity (W increase, S decrease)", 0, 10, 0, 0.01, self.game_area.set_gravity
+            "Gravity (W increase, S decrease)",
+            0, 10, 0, 0.01, self.game_area.set_gravity, size_hint = (1, 1)
         )
         epsilon_box = SliderBox(
             "Epsilon (Potential Depth used for Lennard-Jones force between Molecules) (E increase, D decrease)",
@@ -144,10 +145,12 @@ class MyApp(App):
             0, 1, 1 / 60.0, 1 / 60.0, self.game_area.set_delta
         )
         speed_box = SliderBox(
-            "Speed of Simulation (Y increase, H decrease)", 0.1, 1, 1, 0.1, self.game_area.set_speed
+            "Speed of Simulation (Y increase, H decrease)",
+            0.1, 1, 1, 0.1, self.game_area.set_speed
         )
         size_box = SliderBox(
-            "Size of Molecules (U increase, J decrease)", 0.2, 1, 0.6, 0.05, self.game_area.set_size
+            "Size of Molecules (U increase, J decrease)",
+            0.2, 1, 0.6, 0.05, self.game_area.set_size
         )
         
         # Add sliders to the grid layout in a 3x2 formation
