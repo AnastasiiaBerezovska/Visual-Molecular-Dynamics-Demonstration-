@@ -96,8 +96,8 @@ class MyApp(App):
         
         self.verlet_text = TextBlurb(text="Verlet algorithm: a method used to calculate the movement of these particles in a simulation, allowing us to track how they interact based on the Lennard-Jones potential over time.",
                                             parent_size_prop=(0.15, 0.07),
-                                            parent_pos_prop=(0.85, 0.15))
-        self.query_verlet = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.75, "center_y":0.15}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_info(self.query_verlet, self.verlet_text))
+                                            parent_pos_prop=(0.85, 0.1))
+        self.query_verlet = HoverItem(size_hint=(0.05, 0.05), pos_hint={"center_x":0.75, "center_y":0.1}, height=50, hoverSource="Graphics/Query_Highlighted.png", defaultSource="Graphics/Query.png", function=lambda x: self.toggle_info(self.query_verlet, self.verlet_text))
         
         self.cursOr = Image()
         self.cursOr.source = "Graphics/Cursor.png"
@@ -184,7 +184,7 @@ class MyApp(App):
 
     def create_bottom_controls(self):
         """Create the bottom controls with switches and buttons."""
-        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'y': 0.05})
+        bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'center_y': 0.05})
 
         forces_container, _ = self.create_forces_switch()
         forces_visible_container, _ = self.create_forces_visible_switch()
