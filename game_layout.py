@@ -395,13 +395,13 @@ class GameLayout(Widget):
         """Update the timestep for Verlet integration."""
         self.delta = value
 
-    def toggle_intermolecular_forces(self, switch, value):
+    def toggle_intermolecular_forces(self):
         """Toggle intermolecular forces on or off."""
-        self.intermolecular_forces = value
+        self.intermolecular_forces = not self.intermolecular_forces
 
-    def toggle_forces_visible(self, switch, value):
+    def toggle_forces_visible(self):
         """Toggle intermolecular forces on or off."""
-        self.forces_visible = value
+        self.forces_visible = not self.forces_visible
         # Set whether force arrows should be visible for this molecule
         for molecule in self.molecules:
             molecule.forces_visible = self.forces_visible

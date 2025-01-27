@@ -186,14 +186,18 @@ class MyApp(App):
         """Create the bottom controls with switches and buttons."""
         bottom_row = BoxLayout(orientation='horizontal', size_hint=(0.9, None), height=50, pos_hint={'center_x': 0.5, 'center_y': 0.05})
 
-        forces_container, _ = self.create_forces_switch()
-        forces_visible_container, _ = self.create_forces_visible_switch()
+        # forces_container, _ = self.create_forces_switch()
+        # forces_visible_container, _ = self.create_forces_visible_switch()
+        self.use_forces_button = self.create_hover_button("Forces-Off", self.toggle_intermolecular_forces)
+        self.see_forces_button = self.create_hover_button("Hide-Forces", self.toggle_forces_visible)
         self.clear_button = self.create_hover_button("Clear", self.clear_game_area)
         self.start_stop_button = self.create_hover_button("Start", self.toggle_simulation)
         self.verlet_button = self.create_hover_button("Verlet-Off", self.toggle_verlet_mode)
 
-        bottom_row.add_widget(forces_container)
-        bottom_row.add_widget(forces_visible_container)
+        # bottom_row.add_widget(forces_container)
+        # bottom_row.add_widget(forces_visible_container)
+        bottom_row.add_widget(self.use_forces_button)
+        bottom_row.add_widget(self.see_forces_button)
         bottom_row.add_widget(self.start_stop_button)
         bottom_row.add_widget(self.clear_button)
         bottom_row.add_widget(self.verlet_button)
@@ -231,6 +235,30 @@ class MyApp(App):
             defaultSource=f"Graphics/{label}.png",
             function=lambda x: callback()
         )
+        
+    def toggle_intermolecular_forces(self):
+        """Toggle the usage of intermolecular forces."""
+        if self.game_area.intermolecular_forces:
+            self.use_forces_button.hoverSource="Graphics/Forces-On_Highlighted.png"
+            self.use_forces_button.defaultSource="Graphics/Forces-On.png"
+            self.use_forces_button.source = self.use_forces_button.hoverSource if self.use_forces_button.use else self.use_forces_button.defaultSource
+        else:
+            self.use_forces_button.hoverSource="Graphics/Forces-Off_Highlighted.png"
+            self.use_forces_button.defaultSource="Graphics/Force-Off.png"
+            self.use_forces_button.source = self.use_forces_button.hoverSource if self.use_forces_button.use else self.use_forces_button.defaultSource
+        self.game_area.toggle_intermolecular_forces()
+        
+    def toggle_forces_visible(self):
+        """Toggle the visibility of forces."""
+        if self.game_area.forces_visible:
+            self.see_forces_button.hoverSource="Graphics/Show-Forces_Highlighted.png"
+            self.see_forces_button.defaultSource="Graphics/Show-Forces.png"
+            self.see_forces_button.source = self.see_forces_button.hoverSource if self.see_forces_button.use else self.see_forces_button.defaultSource
+        else:
+            self.see_forces_button.hoverSource="Graphics/Hide-Forces_Highlighted.png"
+            self.see_forces_button.defaultSource="Graphics/Hide-Forces.png"
+            self.see_forces_button.source = self.see_forces_button.hoverSource if self.see_forces_button.use else self.see_forces_button.defaultSource
+        self.game_area.toggle_forces_visible()
 
     def toggle_simulation(self):
         """Toggle the simulation state."""
@@ -262,23 +290,23 @@ class MyApp(App):
         self.game_area.molecules.clear()
         self.game_area.clear_bonds()
 
-    def create_forces_switch(self):
-        """Create a switch for intermolecular forces."""
-        return self.create_switch("Forces", self.game_area.toggle_intermolecular_forces)
+    # def create_forces_switch(self):
+    #     """Create a switch for intermolecular forces."""
+    #     return self.create_switch("Forces", self.game_area.toggle_intermolecular_forces)
 
-    def create_forces_visible_switch(self):
-        """Create a switch to toggle visibility of forces."""
-        return self.create_switch("Show Forces", self.game_area.toggle_forces_visible)
+    # def create_forces_visible_switch(self):
+    #     """Create a switch to toggle visibility of forces."""
+    #     return self.create_switch("Show Forces", self.game_area.toggle_forces_visible)
 
-    def create_switch(self, label_text, callback):
-        """Helper to create labeled switches."""
-        container = BoxLayout(orientation='horizontal', size_hint=(0.6, None), height=50)
-        label = Label(text=label_text, size_hint=(0.6, 1))
-        switch = Switch(active=True, size_hint=(0.4, 1))
-        switch.bind(active=callback)
-        container.add_widget(label)
-        container.add_widget(switch)
-        return container, switch
+    # def create_switch(self, label_text, callback):
+    #     """Helper to create labeled switches."""
+    #     container = BoxLayout(orientation='horizontal', size_hint=(0.6, None), height=50)
+    #     label = Label(text=label_text, size_hint=(0.6, 1))
+    #     switch = Switch(active=True, size_hint=(0.4, 1))
+    #     switch.bind(active=callback)
+    #     container.add_widget(label)
+    #     container.add_widget(switch)
+    #     return container, switch
 
     def add_stat_labels(self, root):
         """Add labels to display simulation stats."""
