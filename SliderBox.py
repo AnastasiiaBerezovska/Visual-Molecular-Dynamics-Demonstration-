@@ -21,8 +21,8 @@ class SliderBox(BoxLayout):
         with self.canvas.before:
             Color(0.2, 0.2, 0.2, 1)  # Background color
             self.bg_rect = Rectangle(pos=self.pos, size=self.size)
-            Color(67/255, 157/255, 1, 1)  # Blue border
-            self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=2)
+            # Color(67/255, 157/255, 1, 1)  # Blue border
+            # self.border = Line(rectangle=(self.x, self.y, self.width, self.height), width=2)
 
         # Bind position and size changes to update the background and border
         self.bind(pos=self.update_graphics, size=self.update_graphics)
@@ -54,7 +54,7 @@ class SliderBox(BoxLayout):
         """Update the background and border dimensions."""
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
-        self.border.rectangle = (self.x, self.y, self.width, self.height)
+        # self.border.rectangle = (self.x, self.y, self.width, self.height)
 
     def _update_label_text_size(self, *args):
         """Ensure the label text fits within the box."""
