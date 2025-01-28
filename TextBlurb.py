@@ -35,8 +35,7 @@ class TextBlurb(BoxLayout):
             opacity=0,  # Initially hidden
             size_hint=(None, None),
             text_size=(self.width - 2 * self.padding[0], None),  # Constrain text to fit inside the widget
-            halign='center',  # Center horizontally
-            valign='middle',  # Center vertically
+            pos_hint={"center_x":0.5, "center_y":0.5} 
         )
         self.text_label.bind(size=self._update_text_size)
         self.add_widget(self.text_label)
@@ -55,6 +54,7 @@ class TextBlurb(BoxLayout):
         """Update the background rectangle size and position."""
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
+        self._update_text_layout()
 
     def _update_text_size(self, instance, value):
         """Adjust the text size dynamically based on the label size."""
