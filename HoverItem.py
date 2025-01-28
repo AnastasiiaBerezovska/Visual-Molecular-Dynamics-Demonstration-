@@ -12,7 +12,8 @@ class HoverItem(Image, HoverBehavior):
         self.defaultSource = kwargs.pop("defaultSource")
         self.function = kwargs.pop("function")
         self.allow_stretch = True
-        self.height = kwargs.pop("height")
+        if "height" in kwargs:
+            self.height = kwargs.pop("height")
         self.size_hint = kwargs.pop("size_hint")
         if "pos_hint" in kwargs:
             self.pos_hint = kwargs.pop("pos_hint")

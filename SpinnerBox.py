@@ -1,11 +1,9 @@
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from CustomSlider import CustomSlider
 from kivy.graphics import Color, Rectangle, Line
 import os
 
 
-class SliderBox(BoxLayout):
+class Spinner(BoxLayout):
     """A widget that encapsulates a slider with a label, a background, and a border."""
     
     def __init__(self, label_text, min_value, max_value, default_value, step, callback, **kwargs):
@@ -31,10 +29,11 @@ class SliderBox(BoxLayout):
         # Add label
         self.label = Label(
             text=label_text,
-            size_hint=(1, 0.2),
+            size_hint=(1, 0.4),
             font_name=self.font_path,
-            font_size=12,
-            pos_hint={"center_x" : 0.5, "center_y" : 0.8}
+            font_size=10,
+            halign='center',
+            valign='middle'
         )
         self.add_widget(self.label)
 
@@ -44,11 +43,7 @@ class SliderBox(BoxLayout):
             max=max_value,
             value=default_value,
             step=step,
-            track_image="Graphics/SliderTrack.png",
-            thumb_image="Graphics/SliderThumb.png",
-            size_hint=(0.7,None),
-            pos_hint={"center_x" : 0.5, "center_y" : 0.3},
-            height=10
+            size_hint=(1, 0.6)
         )
         self.slider.bind(value=lambda instance, value: callback(value))
         self.add_widget(self.slider)

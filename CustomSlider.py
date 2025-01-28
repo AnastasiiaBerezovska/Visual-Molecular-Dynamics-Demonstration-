@@ -18,8 +18,7 @@ class CustomSlider(Widget):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.size_hint = (None, None)
-        self.size = (self.slider_length, self.height)
+        self.size_hint = (1, None)  # Set size_hint for dynamic width resizing
 
         self.track = Image(
             source=self.track_image,
@@ -37,9 +36,9 @@ class CustomSlider(Widget):
         self.add_widget(self.track)
         self.add_widget(self.thumb)
 
+        # Bindings for updates
         self.bind(pos=self.update_positions, size=self.update_positions)
         self.bind(value=self.update_thumb_from_value)
-        self.bind(slider_length=self.update_positions)
 
     def on_touch_down(self, touch):
         """Handle touch events for interaction."""
@@ -65,7 +64,7 @@ class CustomSlider(Widget):
 
     def update_thumb_position(self, touch_x):
         """Move the thumb and update the slider value with steps."""
-        x_min = self.x + (self.width - self.slider_length) / 2
+        x_min = self.x
         x_max = x_min + self.slider_length - self.thumb.width
         new_x = min(max(touch_x, x_min), x_max)
         
@@ -76,19 +75,19 @@ class CustomSlider(Widget):
         snapped_value = round((raw_value - self.min) / self.step) * self.step + self.min
         self.value = max(self.min, min(snapped_value, self.max))
         
-        self.thumb.pos = (self.x + (self.value - self.min) / (self.max - self.min) * (self.width - self.thumb.width),
+        self.thumb.pos = (x_min + (self.value - self.min) / (self.max - self.min) * (self.slider_length - self.thumb.width),
                           self.center_y - self.thumb.height / 2)
 
     def update_positions(self, *args):
         """Update positions of the track and thumb."""
-        x_min = self.x + (self.width - self.slider_length) / 2
+        self.slider_length = self.width  # Dynamically resize slider length to match parent width
         self.track.size = (self.slider_length, 10)  # Set track size dynamically
-        self.track.pos = (x_min, self.center_y - 5)  # Center the track vertically
+        self.track.pos = (self.x, self.center_y - 5)  # Center the track vertically
         self.update_thumb_from_value()
         
     def update_thumb_from_value(self, *args):
         """Update the thumb's position based on the current slider value."""
-        x_min = self.x + (self.width - self.slider_length) / 2
+        x_min = self.x
         self.thumb.pos = (
             x_min + (self.value - self.min) / (self.max - self.min) * (self.slider_length - self.thumb.width),
             self.center_y - self.thumb.height / 2,
