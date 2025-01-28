@@ -15,6 +15,7 @@ from HoverItem import HoverItem # Import HoverItem
 from TextBlurb import TextBlurb
 from CustomSlider import CustomSlider
 from SliderBox import SliderBox
+from SpinnerBox import SpinnerBox
 
 
 class MyApp(App):
@@ -53,33 +54,46 @@ class MyApp(App):
 
     def add_preset_spinner(self, root):
         """Add the preset spinner to the bottom control section."""
-        spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.3, None), height=40, pos_hint={'center_x': 0.15, 'y': 0.1})
+        self.spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.4, None), height=40, pos_hint={'center_x': 0.3, 'y': 0.1})
 
         # Label for the preset spinner
         # preset_label = Label(text="Presets:", size_hint=(0.4, 1), font_size=14)
-        self.preset_label = HoverItem(size_hint=(1, 1), hoverSource="Graphics/Presets.png", defaultSource="Graphics/Presets.png", function=None)
-        spinner_row.add_widget(self.preset_label)
+        self.preset_label = HoverItem(size_hint=(1, 1), 
+                                      hoverSource="Graphics/Presets.png", 
+                                      defaultSource="Graphics/Presets.png", 
+                                      function=lambda x : None)
+        
+        self.spinner_row.add_widget(self.preset_label)
 
         # Spinner for presets
-        preset_spinner = Spinner(
-            text="Solid",
-            values=("Solid", "Liquid", "Gas"),
-            size_hint=(0.6, 1),
-            font_size=14
-        )
-        preset_spinner.bind(text=self.on_preset_selected)
-        spinner_row.add_widget(preset_spinner)
+        # preset_spinner = Spinner(
+        #     text="Solid",
+        #     values=("Solid", "Liquid", "Gas"),
+        #     size_hint=(0.6, 1),
+        #     font_size=14
+        # )
+        # preset_spinner.bind(text=self.on_preset_selected)
+        
+        self.preset_spinner = SpinnerBox(0, ["Solid", "Liquid", "Gas"], size_hint=(1, 1))
+        self.spinner_row.add_widget(self.preset_spinner)
+        
+        self.preset_activate = HoverItem(size_hint=(1, 1), 
+                                         hoverSource="Graphics/Create_Highlighted.png", 
+                                         defaultSource="Graphics/Create.png", 
+                                         function=lambda x : 
+                                             self.generated_selected_preset(self.preset_spinner.possibleValues[self.preset_spinner.value]))
+        self.spinner_row.add_widget(self.preset_activate)
 
         # Add the spinner row to the root layout
-        root.add_widget(spinner_row)
+        root.add_widget(self.spinner_row)
 
-    def on_preset_selected(self, spinner, text):
+    def generated_selected_preset(self, preset):
         """Handle preset selection and update the GameLayout."""
-        if text == "Solid":
+        if preset == "Solid":
             self.game_area.generate_solid()
-        elif text == "Liquid":
+        elif preset == "Liquid":
             self.game_area.generate_liquid()
-        elif text == "Gas":
+        elif preset == "Gas":
             self.game_area.generate_gas()
 
     def add_ui_elements(self, root):
