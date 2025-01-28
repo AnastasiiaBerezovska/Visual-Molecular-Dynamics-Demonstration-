@@ -54,7 +54,7 @@ class MyApp(App):
 
     def add_preset_spinner(self, root):
         """Add the preset spinner to the bottom control section."""
-        self.spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.4, None), height=40, pos_hint={'center_x': 0.3, 'y': 0.1})
+        self.spinner_row = BoxLayout(orientation='horizontal', size_hint=(0.4, None), height=40, pos_hint={'center_x': 0.3, 'y': 0.085})
 
         # Label for the preset spinner
         # preset_label = Label(text="Presets:", size_hint=(0.4, 1), font_size=14)
