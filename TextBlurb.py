@@ -30,7 +30,7 @@ class TextBlurb(BoxLayout):
         # Label for the text blurb
         self.text_label = Label(
             text=self.text,
-            font_size=self.font_size,
+            font_size=self.font_size * self.width // 400,
             font_name=self.font_path,
             opacity=0,  # Initially hidden
             size_hint=(None, None),
@@ -64,17 +64,17 @@ class TextBlurb(BoxLayout):
     def _update_text_layout(self, *args):
         """Update the layout dynamically when text or font size changes."""
         # Update label properties
-        self.text_label.font_size = self.font_size
+        self.text_label.font_size = self.font_size * self.width // 400
         self.text_label.text_size = (self.width - 2 * self.padding[0], None)
 
         # Force texture update to calculate size
         self.text_label.texture_update()
 
         # Resize the widget based on text and padding
-        self.size = (
-            self.text_label.texture_size[0] + 2 * self.padding[0],
-            self.text_label.texture_size[1] + 2 * self.padding[0],
-        )
+        # self.size = (
+        #     self.text_label.texture_size[0] + 2 * self.padding[0],
+        #     self.text_label.texture_size[1] + 2 * self.padding[0],
+        # )
 
         # Center the label within the widget
         self.text_label.size = self.text_label.texture_size
