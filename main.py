@@ -244,7 +244,7 @@ class MyApp(App):
             self.use_forces_button.source = self.use_forces_button.hoverSource if self.use_forces_button.use else self.use_forces_button.defaultSource
         else:
             self.use_forces_button.hoverSource="Graphics/Forces-Off_Highlighted.png"
-            self.use_forces_button.defaultSource="Graphics/Force-Off.png"
+            self.use_forces_button.defaultSource="Graphics/Forces-Off.png"
             self.use_forces_button.source = self.use_forces_button.hoverSource if self.use_forces_button.use else self.use_forces_button.defaultSource
         self.game_area.toggle_intermolecular_forces()
         
