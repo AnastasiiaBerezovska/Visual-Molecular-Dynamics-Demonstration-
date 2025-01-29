@@ -50,11 +50,18 @@ class StartScreen(Screen):
     def add_buttons(self, root):
         """Add the buttons"""
         self.start_button = HoverItem(size_hint=(0.2, 0.1),
-                            pos_hint={"center_x": 0.5, "center_y": 0.5}, 
+                            pos_hint={"center_x": 0.5, "center_y": 0.2}, 
                             hoverSource="Graphics/Start_Highlighted.png", 
                             defaultSource="Graphics/Start.png", 
                             function=lambda x : self.start_game())
+        
+        self.tutorial_button =  HoverItem(size_hint=(0.2, 0.1),
+                                pos_hint={"center_x": 0.5, "center_y": 0.1}, 
+                                hoverSource="Graphics/Tutorial_Highlighted.png", 
+                                defaultSource="Graphics/Tutorial.png", 
+                                function=lambda x : print('bruh'))
         root.add_widget(self.start_button)
+        root.add_widget(self.tutorial_button)
         
     def start_game(self):
         """Make the Window Manager start the game."""
