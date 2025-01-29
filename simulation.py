@@ -11,8 +11,8 @@ from kivy.uix.image import Image
 from kivy.uix.screenmanager import Screen, ScreenManager
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Rectangle, Line
-from game_layout import GameLayout  # Import GameLayout
-from HoverItem import HoverItem # Import HoverItem
+from game_layout import GameLayout
+from HoverItem import HoverItem
 from TextBlurb import TextBlurb
 from CustomSlider import CustomSlider
 from SliderBox import SliderBox
@@ -26,6 +26,8 @@ class GameScreen(Screen):
     
     def __init__(self, **kwargs):
         super(Screen, self).__init__(**kwargs)
+        
+        self.name = "GameScreen"
         
         # Root layout for the entire screen
         self.root = FloatLayout()
