@@ -22,23 +22,33 @@ from start_screen import StartScreen
 
 class WindowManager(ScreenManager):
     
+    def __init__(self, **kwargs):
+        """Set up WindowManager"""
+        
+        self.start_screen = kwargs.pop("start_screen")
+        self.game_screen = kwargs.pop("game_screen")
+        super().__init__(**kwargs)
+        
+        self.add_widget(self.start_screen)
+        self.add_widget(self.game_screen)
+        
+        # self.current = self.start_screen.name
+    
     def start_game(self, name):
-        if name == "StartScreen":
-            self.current = "GameScreen"
+        if name == self.start_screen.name:
+            self.current = self.game_screen.name
             
     def go_back(self, name):
-        if name == "GameScreen":
-            self.current = "StartScreen"
+        if name == self.game_screen.name:
+            self.current = self.start_screen.name
 
 class GameApp(App):
 
     def build(self):
-        self.window_manager = WindowManager()
+        
         self.start_screen = StartScreen()
         self.game_screen = GameScreen()
-        self.window_manager.add_widget(self.start_screen)
-        self.window_manager.add_widget(self.game_screen)
-        self.window_manager.current = "StartScreen"
+        self.window_manager = WindowManager(start_screen=self.start_screen, game_screen=self.game_screen)
         return self.window_manager
 
 
