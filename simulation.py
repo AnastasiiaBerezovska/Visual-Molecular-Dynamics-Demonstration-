@@ -217,6 +217,7 @@ class GameScreen(Screen):
         self.clear_button = self.create_hover_button("Clear", self.clear_game_area)
         self.start_stop_button = self.create_hover_button("Start", self.toggle_simulation)
         self.verlet_button = self.create_hover_button("Verlet-Off", self.toggle_verlet_mode)
+        self.back_button = self.create_hover_button("Back", self.go_back)
 
         # bottom_row.add_widget(forces_container)
         # bottom_row.add_widget(forces_visible_container)
@@ -225,7 +226,11 @@ class GameScreen(Screen):
         bottom_row.add_widget(self.start_stop_button)
         bottom_row.add_widget(self.clear_button)
         bottom_row.add_widget(self.verlet_button)
+        bottom_row.add_widget(self.back_button)
         return bottom_row
+    
+    def go_back(self):
+        self.parent.go_back(self.name)
 
     def create_slider(self, label_text, min_value, max_value, default_value, step_value, callback):
         """Helper to create labeled sliders."""

@@ -58,5 +58,5 @@ class StartScreen(Screen):
         
     def start_game(self):
         """Make the Window Manager start the game."""
-        self.parent.start_game()
+        self.parent.start_game(self.name)
         

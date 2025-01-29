@@ -22,8 +22,13 @@ from start_screen import StartScreen
 
 class WindowManager(ScreenManager):
     
-    def start_game(self):
-        self.current = "GameScreen"
+    def start_game(self, name):
+        if name == "StartScreen":
+            self.current = "GameScreen"
+            
+    def go_back(self, name):
+        if name == "GameScreen":
+            self.current = "StartScreen"
 
 class GameApp(App):
 
