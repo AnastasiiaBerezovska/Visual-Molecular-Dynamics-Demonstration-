@@ -36,6 +36,7 @@ class WindowManager(ScreenManager):
     
     def start_game(self, name):
         if name == self.start_screen.name:
+            # self.game_screen.reset()
             self.current = self.game_screen.name
             
     def go_back(self, name):

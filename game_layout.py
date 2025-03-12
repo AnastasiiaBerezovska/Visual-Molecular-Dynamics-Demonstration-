@@ -8,6 +8,10 @@ from kivy.core.window import Window
 from random import uniform, randint
 import math
 
+import psutil
+import os
+import gc
+
 class GameLayout(Widget):
     intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
     epsilon = NumericProperty(1.0)  # Lennard-Jones potential depth
@@ -69,6 +73,8 @@ class GameLayout(Widget):
         # Schedule the update event
         self.update_event = None
         self.setup_keyboard()
+        
+        Clock.schedule_interval(lambda dt: gc.collect(), 5)
         
     def setup_keyboard(self):
         """Initialize keyboard binding for slider controls."""
@@ -370,6 +376,32 @@ class GameLayout(Widget):
         self.pressure_label.text = f"Pressure: {pressure:.2f}"
         # Update bond lines after molecule movement
         self.update_bond_lines()
+        # memMb=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss/1024.0/1024.0
+        # print ("%5.1f MByte" % (memMb))
+        
+        # # Get current process
+        # process = psutil.Process(os.getpid())
+
+        # # Measure CPU usage of this process
+        # cpu_usage = process.cpu_percent(interval=0)
+        # print(f"Python Process CPU Usage: {cpu_usage}%")
+        
+        # process = psutil.Process()
+        # current_memory = process.memory_info().rss  # In bytes
+        # print(f"Current memory usage: {current_memory / (1024 * 1024)} MB")
+        
+        process = psutil.Process()
+        
+        # CPU Usage (Total system % and current process %)
+        # total_cpu = psutil.cpu_percent(interval=0)  # Total CPU usage across all cores
+        # process_cpu = process.cpu_percent(interval=0)  # This process CPU usage
+
+        # RAM Usage (in MB)
+        # total_memory = psutil.virtual_memory().percent / (1024 * 1024)  # Total system RAM used
+        # process_memory = process.memory_info().rss / (1024 * 1024)  # This process RAM usage
+
+        # print(f"Total CPU Usage: {total_cpu:.2f}% | Total RAM Usage: {total_memory:.2f} MB")
+        # print(f"Process CPU Usage: {process_cpu:.2f}% | Process RAM Usage: {process_memory:.2f} MB")
 
     def on_resize(self):
         # When the game layout is resized, rescale molecules' positions
@@ -447,6 +479,7 @@ class GameLayout(Widget):
         for molecule in self.molecules:
             self.remove_widget(molecule)
         self.molecules.clear()
+        gc.collect()
 
     def create_molecule(self, x, y, vx, vy):
         """Create and add a molecule to the game layout."""
