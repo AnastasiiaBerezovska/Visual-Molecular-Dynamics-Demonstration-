@@ -17,37 +17,87 @@ from TextBlurb import TextBlurb
 from CustomSlider import CustomSlider
 from SliderBox import SliderBox
 from SpinnerBox import SpinnerBox
+from usage_graph import CPUUsageGraph
+from performance_monitor import PerformanceMonitor
+from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
+from usage_graph import CPUUsageGraph  # Import Graph
+from performance_monitor import PerformanceMonitor  # Import CPU Monitor
+from memory_usage import MemoryUsageGraph  # 
 
 class WindowManager(ScreenManager):
     pass
 
 
+from kivy.app import App
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.screenmanager import Screen
+from kivy.core.window import Window
+from game_layout import GameLayout
+from performance_monitor import PerformanceMonitor
+from usage_graph import CPUUsageGraph
+from memory_usage import MemoryUsageGraph  # Import Memory Graph
+
+from kivy.uix.screenmanager import Screen
+from kivy.uix.boxlayout import BoxLayout
+from game_layout import GameLayout
+from performance_monitor import PerformanceMonitor
+from usage_graph import CPUUsageGraph
+from memory_usage import MemoryUsageGraph  # Import Memory Graph
+
 class GameScreen(Screen):
-    
     def __init__(self, **kwargs):
-        super(Screen, self).__init__(**kwargs)
-        
+        super().__init__(**kwargs)
+
         self.name = "GameScreen"
-        
+
+        # Create Performance Monitor
+        self.monitor = PerformanceMonitor()
+
         # Root layout for the entire screen
         self.root = FloatLayout()
 
-        # Add a grey background to cover the entire UI
+        #   a grey background (ONLY for the game UI, NOT the graphs)
         self.add_background(self.root)
 
-        # Create the game area
-        self.game_area = GameLayout(size_hint=(0.8, 0.6), pos_hint={'center_x': 0.5, 'center_y': 0.6})
+        # the Game Area (Shifted Left)
+        self.game_area = GameLayout(
+            size_hint=(0.7, 0.6),  # width slightly
+            pos_hint={'x': 0.05, 'center_y': 0.6}  # left
+        )
 
-        # Add the game area to the root layout
+        #   Area to Root Layout for game
         self.root.add_widget(self.game_area)
-    
-        # Add the preset selector spinner in the control section
+
+        #  the preset selector spinner in the control section
         self.add_preset_spinner(self.root)
 
-        # Add other UI elements
+        #  other UI elements (Sliders, buttons, etc.)
         self.add_ui_elements(self.root)
-        
+
+        # Graphs Container (Right Side, Slightly Smaller)
+        graph_container = BoxLayout(
+            orientation='vertical',
+            size_hint=(0.2, 0.6),  # width & height
+            pos_hint={'right': 0.96, 'top': 0.93}  # slightly further right
+        )
+
+        # CPU & Memory Graphs (Smaller & Properly Positioned)
+        self.cpu_graph = CPUUsageGraph(monitor=self.monitor, size_hint=(1, 0.5))
+        self.memory_graph = MemoryUsageGraph(monitor=self.monitor, size_hint=(1, 0.5))
+
+        #  Inside the Container
+        graph_container.add_widget(self.cpu_graph)
+        graph_container.add_widget(self.memory_graph)
+
+        # Graphs to the Root Layout (NOT Covered by Background)
+        self.root.add_widget(graph_container)
+
+        #  Add Everything to the Screen
         self.add_widget(self.root)
+
 
     def add_background(self, root):
         """Add a grey background and bind its size/position to root."""

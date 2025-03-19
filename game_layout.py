@@ -7,10 +7,14 @@ from molecule import Molecule  # Import the Molecule class
 from kivy.core.window import Window
 from random import uniform, randint
 import math
+from performance_monitor import PerformanceMonitor
 
 import psutil
 import os
 import gc
+
+
+
 
 class GameLayout(Widget):
     intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
@@ -20,6 +24,7 @@ class GameLayout(Widget):
     spring_rest_length = 2.0
     molecule_radius_ratio = 0.03
     use_verlet = True
+    
 
     def __init__(self, **kwargs):
         super(GameLayout, self).__init__(**kwargs)
@@ -29,6 +34,9 @@ class GameLayout(Widget):
         self.bind(pos=self.update_rect, size=self.update_rect)
 
         self.molecules = []  # List of all molecules in the game
+        self.performance_monitor = PerformanceMonitor(sample_interval=1)
+        Clock.schedule_interval(self.monitor_performance, 1)
+
         self.bonds = {}  # Dictionary to store Line objects for each bond
         # print(self.molecule_radius)
         self.old_pos = self.pos[:]
@@ -43,6 +51,16 @@ class GameLayout(Widget):
         self.size_factor = 0.6
         self.molecule_radius = self.size[0] * self.molecule_radius_ratio * self.size_factor # Radius of the molecule
         self.forces_visible = True
+
+
+
+    def monitor_performance(self, dt):
+        cpu_usage = self.performance_monitor.get_cpu_usage()
+        atom_count = len(self.molecules)
+        print(f"Atoms: {atom_count}, CPU Usage: {cpu_usage:.2f}%")
+
+
+
 
         # Variable to store the scheduled update event
         # self.update_event = None

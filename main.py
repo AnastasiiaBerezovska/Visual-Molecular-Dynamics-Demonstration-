@@ -9,6 +9,7 @@ from kivy.uix.switch import Switch
 from kivy.uix.spinner import Spinner
 from kivy.uix.image import Image
 from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.core.window import Window
 from kivy.graphics import Color, Ellipse, Rectangle, Line
 from game_layout import GameLayout
@@ -19,6 +20,10 @@ from SliderBox import SliderBox
 from SpinnerBox import SpinnerBox
 from simulation import GameScreen
 from start_screen import StartScreen
+from usage_graph import CPUUsageGraph
+from performance_monitor import PerformanceMonitor
+
+
 
 class WindowManager(ScreenManager):
     
