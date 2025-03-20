@@ -14,8 +14,6 @@ import os
 import gc
 
 
-
-
 class GameLayout(Widget):
     intermolecular_forces = BooleanProperty(True)  # Toggle for intermolecular forces
     epsilon = NumericProperty(1.0)  # Lennard-Jones potential depth
@@ -35,6 +33,7 @@ class GameLayout(Widget):
 
         self.molecules = []  # List of all molecules in the game
         self.performance_monitor = PerformanceMonitor(sample_interval=1)
+        
         Clock.schedule_interval(self.monitor_performance, 1)
 
         self.bonds = {}  # Dictionary to store Line objects for each bond
@@ -54,6 +53,7 @@ class GameLayout(Widget):
 
 
 
+# Work on this part to log CPU usage and Memory Usage
     def monitor_performance(self, dt):
         cpu_usage = self.performance_monitor.get_cpu_usage()
         atom_count = len(self.molecules)
