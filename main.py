@@ -23,9 +23,11 @@ from start_screen import StartScreen
 from usage_graph import CPUUsageGraph
 from performance_monitor import PerformanceMonitor
 
-
-
 class WindowManager(ScreenManager):
+
+    # ionic bond strongest show that bond strngth ==> indicate more strength
+    # 4bonds represented ==> in terms of strenth ==> ==> show regarding teh bodn breaking
+    # Some imperfections for fluctuation ==> should I fix the perfromance of my thing??
     
     def __init__(self, **kwargs):
         """Set up WindowManager"""

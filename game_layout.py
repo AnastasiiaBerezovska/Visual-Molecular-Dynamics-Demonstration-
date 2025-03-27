@@ -331,7 +331,7 @@ class GameLayout(Widget):
             self.update_event.cancel()
         
         # Schedule with the new interval based on the speed factor
-        new_interval = (1 / 60.0) / speed_factor  # Adjust interval according to speed factor
+        new_interval = (1 / 60.0) / speed_factor  # Adjust interval according to speed factor <=== this is used for updatng simulation
         self.update_event = Clock.schedule_interval(self.update, new_interval)
         
     def set_size(self, size_factor):

@@ -29,24 +29,6 @@ from memory_usage import MemoryUsageGraph  #
 class WindowManager(ScreenManager):
     pass
 
-
-from kivy.app import App
-from kivy.uix.floatlayout import FloatLayout
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.screenmanager import Screen
-from kivy.core.window import Window
-from game_layout import GameLayout
-from performance_monitor import PerformanceMonitor
-from usage_graph import CPUUsageGraph
-from memory_usage import MemoryUsageGraph  # Import Memory Graph
-
-from kivy.uix.screenmanager import Screen
-from kivy.uix.boxlayout import BoxLayout
-from game_layout import GameLayout
-from performance_monitor import PerformanceMonitor
-from usage_graph import CPUUsageGraph
-from memory_usage import MemoryUsageGraph  # Import Memory Graph
-
 class GameScreen(Screen):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

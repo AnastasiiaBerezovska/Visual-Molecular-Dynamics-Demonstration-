@@ -38,7 +38,7 @@ class CPUUsageGraph(BoxLayout):
 
         self.cpu_data = []
 
-        Clock.schedule_interval(self.update_graph, 1)
+        Clock.schedule_interval(self.update_graph, 1)  # to 1/60?? interesting result
 
     def update_graph(self, dt):
         cpu_usage = self.monitor.get_cpu_usage()
