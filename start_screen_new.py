@@ -85,14 +85,14 @@ class StartScreen(Screen):
             os.path.join(os.path.dirname(__file__), "m_to_nm_ions_moving.mp4")
         ]
    
+        # --- PATH FIXES ONLY (fallback to Downloads) ---
         self.video_paths = [
-            p if os.path.exists(p) else "C:\\Users\\Vislab Admin\\Downloads\\{os.path.basename(p)}"
+            p if os.path.exists(p) else f"C:\\Users\\Vislab Admin\\Downloads\\{os.path.basename(p)}"
             for p in self.video_paths
-            
         ]
         self.video_paths = [p for p in self.video_paths if os.path.exists(p)]
-        print("C:\\Users\\Vislab Admin\\Downloads\\{os.path.basename(p)}")
-
+        print(f"C:\\Users\\Vislab Admin\\Downloads\\{os.path.basename(self.video_paths[0])}" if self.video_paths else "No fallback path used")
+        # --- end path fixes ---
 
         if not self.video_paths:
             print("[ERROR] No intro videos found.")
@@ -188,7 +188,7 @@ class StartScreen(Screen):
             Animation(opacity=1, duration=0.6).start(self.keep_clicking_label)
 
     def play_loop_video(self):
-        Window.unbind(on_mouse_down=self.on_click_next_video)
+        Window.unbind(on_touch_down=self.on_touch_down_global)
 
         if self.video:
             self.video.state = 'stop'
@@ -196,8 +196,8 @@ class StartScreen(Screen):
             self.root.remove_widget(self.video)
             self.video = None
 
-        loop_local = os.path.join(os.path.dirname(__file__), "fixed m to nm.mp4")
-        loop_backup = "C:\\Users\\Vislab Admin\\Downloads\\fixed m to nm.mp4"
+        loop_local = os.path.join(os.path.dirname(__file__), "fixed m to mm.mp4")
+        loop_backup = "C:\\Users\\Vislab Admin\\Downloads\\fixed m to nm.mp4"  # already escaped
         loop_path = loop_local if os.path.exists(loop_local) else loop_backup
 
         if not os.path.exists(loop_path):
