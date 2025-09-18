@@ -375,28 +375,21 @@ class StartScreen(Screen):
 
     # Ensure videos are paused/stopped when leaving this screen, and resume on return
     def on_pre_leave(self, *args):
-        print("[INFO] Leaving StartScreen - pausing videos to preserve position")
+        print("[INFO] Leaving StartScreen - freeing GPU resources")
+        # COMPLETELY stop and unload videos to free ALL GPU/CPU resources for other screens
+        for attr in ('video', 'loop_video'):
+            vid = getattr(self, attr, None)
+            if vid:
+                try:
+                    vid.state = 'stop'
+                    vid.unload()
+                    if vid.parent is self.root:
+                        self.root.remove_widget(vid)
+                except Exception:
+                    pass
+                setattr(self, attr, None)
         
-        # For intro videos: stop completely (we want to restart these)
-        if self.video:
-            try:
-                self.video.state = 'stop'
-                self.video.unload()
-                if self.video.parent is self.root:
-                    self.root.remove_widget(self.video)
-            except Exception:
-                pass
-            self.video = None
-            
-        # For loop video: just pause (preserve position and use less resources)
-        if self.loop_video:
-            try:
-                self.loop_video.state = 'pause'  # Just pause, don't unload
-                print("[DEBUG] Loop video paused")
-            except Exception as e:
-                print(f"[WARNING] Error pausing loop video: {e}")
-        
-        # Light cleanup
+        # Force aggressive cleanup to free resources for molecules
         self.force_cleanup()
         
         # Unbind global touch to avoid callbacks while in other screens
@@ -408,7 +401,6 @@ class StartScreen(Screen):
             self._touch_bound = False
 
     def on_pre_enter(self, *args):
-        print("[INFO] Entering StartScreen")
         # Rebind touch if needed
         if not self._touch_bound:
             try:
@@ -416,17 +408,8 @@ class StartScreen(Screen):
                 self._touch_bound = True
             except Exception:
                 pass
-                
-        # Resume videos based on current state
+        # If intro finished, show loop; otherwise resume intros from current index
         try:
-            # If we have a paused loop video, just resume it
-            if (hasattr(self, 'loop_video') and self.loop_video and 
-                self.loop_video.state == 'pause'):
-                self.loop_video.state = 'play'
-                print("[DEBUG] Resumed loop video from pause")
-                return
-                
-            # Otherwise, restart video system normally
             if hasattr(self, 'video_paths') and hasattr(self, 'video_index'):
                 if self.video_index >= len(self.video_paths):
                     self.play_loop_video()
@@ -435,6 +418,6 @@ class StartScreen(Screen):
             else:
                 # First-time or missing init: re-add video player
                 self.add_video_player(self.root)
-        except Exception as e:
-            print(f"[ERROR] Video restart failed: {e}")
-            # Fail-safe: keep UI responsive
+        except Exception:
+            # Fail-safe: keep UI responsive even if video fails
+            pass
